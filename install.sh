@@ -169,7 +169,7 @@ detect_project_type() {
 
 select_mode() {
     # Check if mode is set via environment variable
-    if [ -n "$DEVKIT_MODE" ]; then
+    if [ -n "${DEVKIT_MODE:-}" ]; then
         case "$DEVKIT_MODE" in
             kitchen-sink|1) echo "kitchen-sink" ;;
             custom|2) echo "custom" ;;
