@@ -18,5 +18,5 @@ console.workspace = true
 dialoguer.workspace = true
 ctrlc.workspace = true
 devkit-core.workspace = true
-devkit-compose.workspace = true
 devkit-tasks.workspace = true
+devkit-ext-docker = { path = "../../extensions/devkit-ext-docker" }

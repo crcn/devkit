@@ -1,11 +1,11 @@
 [package]
-name = "devkit-compose"
+name = "devkit-ext-docker"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Docker compose operations for devkit"
+description = "Docker and Docker Compose extension for devkit"
 
 [dependencies]
 anyhow.workspace = true
@@ -13,3 +13,4 @@ console.workspace = true
 dialoguer.workspace = true
 indicatif.workspace = true
 devkit-core.workspace = true
+devkit-tasks.workspace = true

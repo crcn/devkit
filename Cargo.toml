@@ -2,9 +2,9 @@
 resolver = "2"
 members = [
     "crates/devkit-core",
-    "crates/devkit-compose",
     "crates/devkit-tasks",
     "crates/devkit-cli",
+    "extensions/devkit-ext-docker",
 ]
 
 [workspace.package]
