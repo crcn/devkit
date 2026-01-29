@@ -10,13 +10,33 @@
 
 ### Quick Install (Recommended)
 
-Install devkit binary + project setup:
+Install devkit binary + project setup (defaults to Kitchen Sink mode):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash
 ```
 
-This installs the binary to `~/.local/bin` and optionally sets up your project with configs and wrapper scripts.
+This installs the binary to `~/.local/bin` and sets up your project with Kitchen Sink mode.
+
+### Interactive Install (Choose Mode)
+
+Download and run interactively to choose between Kitchen Sink or Custom CLI:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
+```
+
+### Specify Mode Explicitly
+
+```bash
+# Kitchen Sink mode (recommended)
+DEVKIT_MODE=kitchen-sink curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash
+
+# Custom CLI mode (advanced)
+DEVKIT_MODE=custom curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash
+```
 
 ### Binary Only
 
@@ -152,14 +172,14 @@ devkit/
     ├── devkit-ext-deps/      ✅ Dependency detection & installation
     ├── devkit-ext-database/  ✅ Database migrations & seeds
     ├── devkit-ext-quality/   ✅ Format, lint, test
-    ├── devkit-ext-git/       🚧 Git workflows
-    ├── devkit-ext-ci/        🚧 CI integration
-    ├── devkit-ext-env/       🚧 Environment management
-    ├── devkit-ext-tunnel/    🚧 Tunneling services
-    ├── devkit-ext-test/      🚧 Test orchestration
-    ├── devkit-ext-benchmark/ 🚧 Benchmarking
-    ├── devkit-ext-ecs/       🚧 ECS deployment
-    └── devkit-ext-pulumi/    🚧 Pulumi infrastructure
+    ├── devkit-ext-git/       ✅ Git workflows & releases
+    ├── devkit-ext-ci/        ✅ CI integration (GitHub Actions)
+    ├── devkit-ext-env/       ✅ Environment management
+    ├── devkit-ext-tunnel/    ✅ Tunneling services (ngrok/cloudflared)
+    ├── devkit-ext-test/      ✅ Test orchestration & coverage
+    ├── devkit-ext-benchmark/ ✅ Benchmarking (Rust/Node)
+    ├── devkit-ext-ecs/       ✅ ECS deployment (AWS)
+    └── devkit-ext-pulumi/    ✅ Pulumi infrastructure
 ```
 
 ### devkit-core
@@ -353,28 +373,27 @@ impl Extension for MyExtension {
 - [x] Structured logging
 - [x] Test suite (20+ tests)
 
-### Extensions (In Progress 🚧)
+### Extensions (Complete ✅)
 - [x] Docker operations
 - [x] Dependency management
 - [x] Database operations
 - [x] Code quality tools
-- [ ] Git workflows
-- [ ] CI integration
-- [ ] Environment management
-- [ ] Tunnel services
-- [ ] Test orchestration
-- [ ] Benchmarking
-- [ ] ECS deployment
-- [ ] Pulumi infrastructure
+- [x] Git workflows & releases
+- [x] CI integration (GitHub Actions)
+- [x] Environment management
+- [x] Tunnel services (ngrok/cloudflared)
+- [x] Test orchestration & coverage
+- [x] Benchmarking (Rust/Node)
+- [x] ECS deployment (AWS)
+- [x] Pulumi infrastructure
 
 ### Future
 - [ ] Init command for new projects
-- [ ] One-line installer script
 - [ ] Publish to crates.io
 - [ ] Additional language support (Python, Go, TypeScript)
 - [ ] Plugin marketplace
 
-Current progress: **~60%** (core complete, extensions in progress)
+Current progress: **~95%** (core complete, all extensions implemented)
 
 ## Testing
 

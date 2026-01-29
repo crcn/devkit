@@ -4,8 +4,27 @@
 
 use anyhow::{anyhow, Result};
 use console::style;
-use devkit_core::AppContext;
+use devkit_core::{AppContext, Extension, MenuItem};
 use devkit_tasks::CmdBuilder;
+
+pub struct EcsExtension;
+
+impl Extension for EcsExtension {
+    fn name(&self) -> &str {
+        "ecs"
+    }
+
+    fn is_available(&self, _ctx: &AppContext) -> bool {
+        devkit_core::cmd_exists("aws")
+    }
+
+    fn menu_items(&self) -> Vec<MenuItem> {
+        // Note: ECS operations require cluster/task parameters
+        // These are better used programmatically or via CLI args
+        // For now, return empty menu items
+        vec![]
+    }
+}
 
 /// Execute a command in an ECS container
 pub fn ecs_exec(

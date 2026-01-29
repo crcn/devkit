@@ -433,6 +433,30 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
     #[cfg(feature = "deps")]
     registry.register(Box::new(devkit_ext_deps::DepsExtension));
 
+    #[cfg(feature = "git")]
+    registry.register(Box::new(devkit_ext_git::GitExtension));
+
+    #[cfg(feature = "tunnel")]
+    registry.register(Box::new(devkit_ext_tunnel::TunnelExtension));
+
+    #[cfg(feature = "env")]
+    registry.register(Box::new(devkit_ext_env::EnvExtension));
+
+    #[cfg(feature = "benchmark")]
+    registry.register(Box::new(devkit_ext_benchmark::BenchmarkExtension));
+
+    #[cfg(feature = "ecs")]
+    registry.register(Box::new(devkit_ext_ecs::EcsExtension));
+
+    #[cfg(feature = "pulumi")]
+    registry.register(Box::new(devkit_ext_pulumi::PulumiExtension));
+
+    #[cfg(feature = "test")]
+    registry.register(Box::new(devkit_ext_test::TestExtension));
+
+    #[cfg(feature = "ci")]
+    registry.register(Box::new(devkit_ext_ci::CiExtension));
+
     loop {
         // Build menu dynamically - extensions auto-register their items!
         let menu_items = registry.menu_items(ctx);

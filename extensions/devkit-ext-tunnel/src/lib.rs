@@ -3,8 +3,37 @@
 //! Provides HTTP tunneling via ngrok or cloudflared.
 
 use anyhow::{anyhow, Result};
-use devkit_core::AppContext;
+use devkit_core::{AppContext, Extension, MenuItem};
 use devkit_tasks::CmdBuilder;
+
+pub struct TunnelExtension;
+
+impl Extension for TunnelExtension {
+    fn name(&self) -> &str {
+        "tunnel"
+    }
+
+    fn is_available(&self, _ctx: &AppContext) -> bool {
+        devkit_core::cmd_exists("ngrok") || devkit_core::cmd_exists("cloudflared")
+    }
+
+    fn menu_items(&self) -> Vec<MenuItem> {
+        vec![
+            MenuItem {
+                label: "🌐 Tunnel - Port 3000".to_string(),
+                handler: Box::new(|ctx| {
+                    start_tunnel(ctx, 3000, None).map_err(Into::into)
+                }),
+            },
+            MenuItem {
+                label: "🌐 Tunnel - Port 8080".to_string(),
+                handler: Box::new(|ctx| {
+                    start_tunnel(ctx, 8080, None).map_err(Into::into)
+                }),
+            },
+        ]
+    }
+}
 
 /// Start an HTTP tunnel to localhost
 pub fn start_tunnel(ctx: &AppContext, port: u16, subdomain: Option<&str>) -> Result<()> {

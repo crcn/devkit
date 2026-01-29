@@ -3,8 +3,31 @@
 //! Provides performance benchmarking for Rust and JavaScript projects.
 
 use anyhow::{anyhow, Result};
-use devkit_core::AppContext;
+use devkit_core::{AppContext, Extension, MenuItem};
 use devkit_tasks::CmdBuilder;
+
+pub struct BenchmarkExtension;
+
+impl Extension for BenchmarkExtension {
+    fn name(&self) -> &str {
+        "benchmark"
+    }
+
+    fn is_available(&self, ctx: &AppContext) -> bool {
+        ctx.features.cargo || ctx.features.node
+    }
+
+    fn menu_items(&self) -> Vec<MenuItem> {
+        vec![
+            MenuItem {
+                label: "⚡ Benchmark - Run All".to_string(),
+                handler: Box::new(|ctx| {
+                    run_benchmarks(ctx, &BenchmarkOptions::default()).map_err(Into::into)
+                }),
+            },
+        ]
+    }
+}
 
 pub struct BenchmarkOptions {
     /// Specific benchmark filter

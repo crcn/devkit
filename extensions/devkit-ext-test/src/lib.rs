@@ -2,16 +2,48 @@
 //!
 //! Provides test running, coverage, and watch functionality for Rust and JavaScript projects.
 
+use devkit_core::{AppContext, Extension, MenuItem};
+
 mod coverage;
 mod test;
 mod watch;
 
-pub use coverage::run_coverage;
-pub use test::run_tests;
+pub use coverage::{run_coverage, CoverageOptions};
+pub use test::{run_tests, TestOptions};
 pub use watch::watch_tests;
 
-/// Check if this extension should be enabled
-pub fn should_enable(ctx: &devkit_core::AppContext) -> bool {
-    // Enable if we have Rust or Node projects
-    ctx.features.cargo || ctx.features.node
+pub struct TestExtension;
+
+impl Extension for TestExtension {
+    fn name(&self) -> &str {
+        "test"
+    }
+
+    fn is_available(&self, ctx: &AppContext) -> bool {
+        ctx.features.cargo || ctx.features.node
+    }
+
+    fn menu_items(&self) -> Vec<MenuItem> {
+        vec![
+            MenuItem {
+                label: "🧪 Test - Run All".to_string(),
+                handler: Box::new(|ctx| {
+                    run_tests(ctx, &TestOptions::default())?;
+                    Ok(())
+                }),
+            },
+            MenuItem {
+                label: "🧪 Test - Watch".to_string(),
+                handler: Box::new(|ctx| {
+                    watch_tests(ctx, None).map_err(Into::into)
+                }),
+            },
+            MenuItem {
+                label: "📊 Test - Coverage".to_string(),
+                handler: Box::new(|ctx| {
+                    run_coverage(ctx, &CoverageOptions::default()).map_err(Into::into)
+                }),
+            },
+        ]
+    }
 }

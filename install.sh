@@ -168,27 +168,47 @@ detect_project_type() {
 # =============================================================================
 
 select_mode() {
-    echo
-    log_info "Select installation mode:"
-    echo
-    echo "  1) Kitchen Sink (Recommended)"
-    echo "     Batteries-included CLI with all features."
-    echo "     Configure via .dev/config.toml - no Rust code needed!"
-    echo "     Perfect for most projects."
-    echo
-    echo "  2) Custom CLI"
-    echo "     Create your own CLI with dev/cli/ project."
-    echo "     Full control - add only extensions you need."
-    echo "     Best for complex projects with specific needs."
-    echo
-    read -p "Enter choice [1]: " mode
-    mode=${mode:-1}
+    # Check if mode is set via environment variable
+    if [ -n "$DEVKIT_MODE" ]; then
+        case "$DEVKIT_MODE" in
+            kitchen-sink|1) echo "kitchen-sink" ;;
+            custom|2) echo "custom" ;;
+            *)
+                log_warn "Invalid DEVKIT_MODE='$DEVKIT_MODE', defaulting to kitchen-sink"
+                echo "kitchen-sink"
+                ;;
+        esac
+        return
+    fi
 
-    case $mode in
-        1) echo "kitchen-sink" ;;
-        2) echo "custom" ;;
-        *) echo "kitchen-sink" ;;
-    esac
+    # Check if running interactively (stdin is a terminal)
+    if [ -t 0 ]; then
+        echo
+        log_info "Select installation mode:"
+        echo
+        echo "  1) Kitchen Sink (Recommended)"
+        echo "     Batteries-included CLI with all features."
+        echo "     Configure via .dev/config.toml - no Rust code needed!"
+        echo "     Perfect for most projects."
+        echo
+        echo "  2) Custom CLI"
+        echo "     Create your own CLI with dev/cli/ project."
+        echo "     Full control - add only extensions you need."
+        echo "     Best for complex projects with specific needs."
+        echo
+        read -p "Enter choice [1]: " mode
+        mode=${mode:-1}
+
+        case $mode in
+            1) echo "kitchen-sink" ;;
+            2) echo "custom" ;;
+            *) echo "kitchen-sink" ;;
+        esac
+    else
+        # Non-interactive mode (piped from curl) - default to kitchen-sink
+        log_info "Non-interactive mode detected, using Kitchen Sink mode (recommended)"
+        echo "kitchen-sink"
+    fi
 }
 
 # =============================================================================

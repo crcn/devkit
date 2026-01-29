@@ -3,6 +3,9 @@ name = "dev-cli"
 version = "0.1.0"
 edition = "2021"
 
+# Independent workspace - won't conflict with parent project
+[workspace]
+
 [[bin]]
 name = "dev-cli"
 path = "src/main.rs"

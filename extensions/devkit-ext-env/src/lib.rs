@@ -3,10 +3,42 @@
 //! Provides environment variable loading, editing, and optional Pulumi ESC integration.
 
 use anyhow::{anyhow, Context, Result};
-use devkit_core::AppContext;
+use devkit_core::{AppContext, Extension, MenuItem};
 use devkit_tasks::CmdBuilder;
 use std::fs;
 use std::path::Path;
+
+pub struct EnvExtension;
+
+impl Extension for EnvExtension {
+    fn name(&self) -> &str {
+        "env"
+    }
+
+    fn is_available(&self, _ctx: &AppContext) -> bool {
+        // Always available - env management is always useful
+        true
+    }
+
+    fn menu_items(&self) -> Vec<MenuItem> {
+        vec![
+            MenuItem {
+                label: "🔐 Env - Load .env".to_string(),
+                handler: Box::new(|ctx| {
+                    let env_file = ctx.repo.join(".env");
+                    load_env(ctx, &env_file).map_err(Into::into)
+                }),
+            },
+            MenuItem {
+                label: "🔐 Env - Load .env.local".to_string(),
+                handler: Box::new(|ctx| {
+                    let env_file = ctx.repo.join(".env.local");
+                    load_env(ctx, &env_file).map_err(Into::into)
+                }),
+            },
+        ]
+    }
+}
 
 /// Load environment variables from a .env file
 pub fn load_env(ctx: &AppContext, env_file: &Path) -> Result<()> {

@@ -3,8 +3,37 @@
 //! Provides Pulumi infrastructure deployment operations.
 
 use anyhow::{anyhow, Result};
-use devkit_core::AppContext;
+use devkit_core::{AppContext, Extension, MenuItem};
 use devkit_tasks::CmdBuilder;
+
+pub struct PulumiExtension;
+
+impl Extension for PulumiExtension {
+    fn name(&self) -> &str {
+        "pulumi"
+    }
+
+    fn is_available(&self, _ctx: &AppContext) -> bool {
+        devkit_core::cmd_exists("pulumi")
+    }
+
+    fn menu_items(&self) -> Vec<MenuItem> {
+        vec![
+            MenuItem {
+                label: "☁️  Pulumi - Preview".to_string(),
+                handler: Box::new(|ctx| {
+                    pulumi_preview(ctx, None).map_err(Into::into)
+                }),
+            },
+            MenuItem {
+                label: "☁️  Pulumi - Deploy (Up)".to_string(),
+                handler: Box::new(|ctx| {
+                    pulumi_up(ctx, None, false).map_err(Into::into)
+                }),
+            },
+        ]
+    }
+}
 
 /// Pulumi up (deploy infrastructure)
 pub fn pulumi_up(ctx: &AppContext, stack: Option<&str>, yes: bool) -> Result<()> {
