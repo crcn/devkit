@@ -1,0 +1,21 @@
+[package]
+name = "devkit-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core types and utilities for devkit"
+
+[dependencies]
+anyhow.workspace = true
+console.workspace = true
+dialoguer.workspace = true
+dirs.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+toml.workspace = true
+glob.workspace = true
+which.workspace = true
+dotenvy.workspace = true

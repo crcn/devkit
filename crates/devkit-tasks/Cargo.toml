@@ -1,0 +1,16 @@
+[package]
+name = "devkit-tasks"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Task discovery and execution engine for devkit"
+
+[dependencies]
+anyhow.workspace = true
+console.workspace = true
+serde.workspace = true
+toml.workspace = true
+glob.workspace = true
+devkit-core.workspace = true

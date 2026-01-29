@@ -1,0 +1,22 @@
+[package]
+name = "devkit-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Default CLI binary for devkit"
+
+[[bin]]
+name = "devkit"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+console.workspace = true
+dialoguer.workspace = true
+ctrlc.workspace = true
+devkit-core.workspace = true
+devkit-compose.workspace = true
+devkit-tasks.workspace = true
