@@ -5,6 +5,7 @@ members = [
     "crates/devkit-tasks",
     "crates/devkit-cli",
     "extensions/devkit-ext-docker",
+    "examples/custom-cli",
 ]
 
 [workspace.package]

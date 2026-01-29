@@ -1,0 +1,20 @@
+[package]
+name = "example-dev-cli"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "dev"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+console = "0.15"
+dialoguer = { version = "0.11", features = ["fuzzy-select"] }
+
+# devkit
+devkit-core = { path = "../../crates/devkit-core" }
+devkit-tasks = { path = "../../crates/devkit-tasks" }
+devkit-ext-docker = { path = "../../extensions/devkit-ext-docker" }
