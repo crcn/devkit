@@ -4,6 +4,71 @@
 
 > ✨ **Status**: Active development - Core features complete, extensions in progress
 
+---
+
+## 🚀 Installation
+
+### Quick Install (Recommended)
+
+Install devkit binary + project setup:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash
+```
+
+This installs the binary to `~/.local/bin` and optionally sets up your project with configs and wrapper scripts.
+
+### Binary Only
+
+Just want the CLI tool globally? Download and install:
+
+```bash
+# Detect platform and install
+PLATFORM=$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/arm64/aarch64/')
+curl -fsSL "https://github.com/crcn/devkit/releases/latest/download/devkit-${PLATFORM}" -o devkit
+chmod +x devkit
+sudo mv devkit /usr/local/bin/
+```
+
+Or manually for your platform:
+
+```bash
+# Linux x86_64
+curl -fsSL https://github.com/crcn/devkit/releases/latest/download/devkit-linux-x86_64 -o devkit
+
+# Linux ARM64
+curl -fsSL https://github.com/crcn/devkit/releases/latest/download/devkit-linux-aarch64 -o devkit
+
+# macOS Intel
+curl -fsSL https://github.com/crcn/devkit/releases/latest/download/devkit-macos-x86_64 -o devkit
+
+# macOS Apple Silicon
+curl -fsSL https://github.com/crcn/devkit/releases/latest/download/devkit-macos-aarch64 -o devkit
+
+# Then install
+chmod +x devkit && sudo mv devkit /usr/local/bin/
+```
+
+<details>
+<summary>Windows Installation</summary>
+
+Download from [releases page](https://github.com/crcn/devkit/releases/latest):
+- `devkit-windows-x86_64.exe`
+
+Add to PATH or rename to `devkit.exe` and place in a directory in your PATH.
+</details>
+
+### Build from Source
+
+```bash
+git clone https://github.com/crcn/devkit
+cd devkit
+cargo build --release -p devkit-cli
+# Binary at target/release/devkit
+```
+
+---
+
 ## What is devkit?
 
 `devkit` is a zero-friction CLI tool that unifies your development workflows. It provides a single interface for Docker, databases, testing, CI/CD, and custom project commands - all while automatically detecting what's available in your project.
