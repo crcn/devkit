@@ -96,7 +96,7 @@ jobs:
         shell: bash
 
       - name: Strip binary (Linux and macOS)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest' && !matrix.cross
         run: strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
       - name: Prepare binary
