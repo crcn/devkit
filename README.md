@@ -1,104 +1,205 @@
 # devkit
 
-A comprehensive development environment orchestration toolkit written in Rust.
+**A comprehensive development environment orchestration toolkit written in Rust.**
 
-## Overview
+> 🚧 **Status**: Early development - Phase 2 complete (task system extracted)
 
-`devkit` provides a unified CLI interface for managing development workflows across:
-- Docker container orchestration
-- Environment variable management
-- Database operations
-- Code quality tools (fmt, lint, test)
-- Build and watch modes
-- CI/CD integration
-- Release workflows
-- Custom project commands via `dev.toml`
+## What is devkit?
+
+`devkit` is a zero-friction CLI tool that unifies your development workflows. It provides a single interface for Docker, databases, testing, CI/CD, and custom project commands - all while automatically detecting what's available in your project.
+
+Born from the need to eliminate duplicated dev tooling across multiple projects, devkit extracts the 70% of dev-cli patterns that are identical across projects while letting you keep the 30% that's unique to each codebase.
+
+## Key Features
+
+### 🎯 Smart Feature Detection
+Commands automatically hide if features aren't detected:
+- No `docker-compose.yml`? No docker commands
+- No `[database]` sections? No database commands
+- No `.github/workflows`? No CI commands
+
+### 📦 Package Command System
+Define commands once in `dev.toml`, run anywhere:
+```toml
+[cmd.build]
+default = "cargo build"
+watch = "cargo watch -x build"
+deps = ["common:build"]  # Dependency resolution
+
+[cmd.test]
+default = "cargo test"
+```
+
+Then run:
+```bash
+./dev.sh cmd build --watch  # Automatic variant selection
+./dev.sh cmd test           # Respects dependencies
+```
+
+### 🚀 Zero-Friction Setup
+One command to initialize any project:
+```bash
+devkit init  # Creates dev.sh, .dev/config.toml, detects project type
+./dev.sh     # Interactive menu with auto-detected features
+```
+
+### 🔧 Extend or Use Standalone
+- **Library**: Import `devkit-core` and `devkit-tasks` for custom CLIs
+- **Standalone**: Use the default `devkit` binary
+- **Both**: Mix and match as needed
 
 ## Architecture
 
 ```
 devkit/
-├── devkit-core      # Core abstractions (context, config, utils)
-├── devkit-compose   # Docker compose operations
-├── devkit-tasks     # Task discovery and execution engine
-└── devkit-cli       # Default CLI binary
+├── devkit-core/       ✅ Config, context, detection
+├── devkit-compose/    🚧 Docker operations (TODO)
+├── devkit-tasks/      ✅ Command discovery & execution
+└── devkit-cli/        🚧 CLI binary (TODO)
 ```
 
-## Usage
+### devkit-core
+Core abstractions for all devkit tools:
+- **Config system**: Discovers packages, loads `.dev/config.toml` and `dev.toml`
+- **Feature detection**: Auto-detect Docker, Git, databases, CI, mobile, etc.
+- **AppContext**: Shared state, theming, quiet mode
+- **Utilities**: Repo root detection, command checks, browser opening
 
-### As a standalone tool
+### devkit-tasks
+Task discovery and execution engine:
+- **Command discovery**: Find commands in package `dev.toml` files
+- **Dependency resolution**: Topological sort, circular dependency detection
+- **Parallel execution**: Run independent commands concurrently
+- **Variant support**: `build:watch`, `lint:fix`, etc.
 
+### devkit-compose (TODO - Phase 3)
+Docker compose operations
+
+### devkit-cli (TODO - Phase 4)
+Full CLI with all commands
+
+## Quick Start
+
+### Installation (when published)
 ```bash
 cargo install devkit-cli
+```
+
+### Initialize Your Project
+```bash
 cd your-project
 devkit init
-devkit start
 ```
 
-### As a library
+This creates:
+- `dev.sh` - Auto-installs Rust and devkit, then runs commands
+- `.dev/config.toml` - Global config with detected values
+- Sample `dev.toml` files (optional)
 
-```toml
-[dependencies]
-devkit-core = "0.1"
-devkit-tasks = "0.1"
-```
-
-Build your own CLI with project-specific extensions:
-
-```rust
-use devkit_core::AppContext;
-use devkit_tasks::TaskRunner;
-
-fn main() -> anyhow::Result<()> {
-    let ctx = AppContext::new(false)?;
-    // Add your custom commands here
-    Ok(())
-}
+### Run Commands
+```bash
+./dev.sh              # Interactive menu
+./dev.sh cmd test     # Run tests
+./dev.sh cmd build    # Build packages
 ```
 
 ## Configuration
 
-Projects configure devkit via `.dev/config.toml`:
+### Global Config (`.dev/config.toml`)
 
 ```toml
-[global]
+[project]
 name = "my-project"
 
-[global.environments]
-available = ["dev", "prod"]
+[workspaces]
+packages = ["packages/*", "apps/*"]
+exclude = ["packages/legacy"]
+
+[environments]
+available = ["dev", "staging", "prod"]
 default = "dev"
 
-[global.workspaces]
-packages = ["packages/*"]
+[services]
+api = 8080
+postgres = 5432
 
-[docker]
-compose_file = "docker-compose.yml"
+[urls.playground]
+label = "GraphQL Playground"
+url = "http://localhost:8080/playground"
 ```
 
-### Package Commands
-
-Packages define their own commands in `dev.toml`:
+### Package Config (`packages/*/dev.toml`)
 
 ```toml
+# Database migrations
+[database]
+migrations = "migrations"
+seeds = "seeds/dev.sql"
+
+# Commands with variants and dependencies
 [cmd]
-test = "npm test"
+test = "cargo test"
 
 [cmd.build]
-default = "npm run build"
-watch = "npm run build:watch"
-deps = ["utils:build"]  # Dependencies
+default = "cargo build"
+release = "cargo build --release"
+watch = "cargo watch -x build"
+deps = ["common:build", "utils:build"]
+
+[cmd.lint]
+default = "cargo clippy"
+fix = "cargo clippy --fix"
 ```
 
-Run commands:
-```bash
-devkit cmd test           # Run tests
-devkit cmd build --watch  # Build in watch mode
+## Use as a Library
+
+```rust
+use devkit_core::AppContext;
+use devkit_tasks::{run_cmd, CmdOptions};
+
+fn main() -> anyhow::Result<()> {
+    let ctx = AppContext::new(false)?;
+
+    // Feature detection
+    if ctx.features.docker {
+        println!("Docker available!");
+    }
+
+    // Run package commands
+    let opts = CmdOptions::default();
+    let results = run_cmd(&ctx, "test", &opts)?;
+
+    Ok(())
+}
 ```
 
-## Project Status
+## Development Roadmap
 
-🚧 **Early Development** - Extracted from production use in multiple projects with 70% code overlap.
+- [x] **Phase 1**: Core infrastructure (config, context, detection)
+- [x] **Phase 2**: Task system (command discovery, execution, dependencies)
+- [ ] **Phase 3**: Docker operations
+- [ ] **Phase 4**: CLI commands (test, fmt, lint, etc.)
+- [ ] **Phase 5**: Init command
+- [ ] **Phase 6**: Integration testing & crates.io release
+
+Current progress: **~30%**
+
+## Why devkit?
+
+**Problem**: Multiple projects with similar dev workflows, lots of duplicated code.
+
+**Solution**: Extract the 70% that's identical into `devkit`, keep the 30% that's unique.
+
+**Result**:
+- Shared infrastructure across all projects
+- Project-specific extensions stay in project
+- Each project pins the devkit version that works for them
+- No coordination overhead
 
 ## License
 
 MIT OR Apache-2.0
+
+## Contributing
+
+See [EXTRACTING.md](EXTRACTING.md) for extraction progress and [STATUS.md](STATUS.md) for current state.

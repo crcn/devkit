@@ -17,8 +17,8 @@ This document tracks what's been extracted from Shaya dev-cli and what remains.
 - [ ] Extract `cmd/docker.rs` - Docker container management
 
 ### devkit-tasks
-- [ ] Extract `cmd/cmd.rs` - Package command discovery and execution
-- [ ] Extract `cmd_builder.rs` - Command building utilities
+- [x] Extract `cmd/cmd.rs` - Package command discovery and execution
+- [x] Extract `cmd_builder.rs` - Command building utilities
 
 ## 📋 TODO
 
