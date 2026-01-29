@@ -267,11 +267,43 @@ install_wrapper_script() {
         mv "$script_path" "$script_path.bak"
     fi
 
-    # Download appropriate wrapper script
     if [ "$mode" = "kitchen-sink" ]; then
-        curl -fsSL "$RAW_URL/templates/dev-kitchen-sink.sh" -o "$script_path"
+        # Embed kitchen-sink script directly for reliability
+        cat > "$script_path" << 'DEVSH_EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR"
+
+need_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+export REPO_ROOT
+
+# Kitchen Sink Mode: Use globally installed devkit binary
+if need_cmd devkit; then
+  exec devkit "$@"
+fi
+
+# If devkit not found, provide installation instructions
+echo "❌ devkit not found in PATH"
+echo
+echo "Install devkit by running:"
+echo
+echo "  curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash"
+echo
+echo "Or if you have devkit installed elsewhere, add it to your PATH:"
+echo "  export PATH=\"/path/to/devkit:\$PATH\""
+echo
+
+exit 1
+DEVSH_EOF
     else
-        curl -fsSL "$RAW_URL/templates/dev.sh" -o "$script_path"
+        # Download custom CLI script
+        curl -fsSL "$RAW_URL/templates/dev.sh" -o "$script_path" || {
+            log_error "Failed to download custom CLI template"
+            return 1
+        }
     fi
 
     chmod +x "$script_path"
