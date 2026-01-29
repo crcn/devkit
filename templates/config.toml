@@ -1,0 +1,74 @@
+# =============================================================================
+# Global Dev Configuration
+# =============================================================================
+# Settings shared across all packages. For package-specific config, use dev.toml
+
+[project]
+# Project name (used for stack names, service prefixes, etc.)
+name = "my-project"
+
+[workspaces]
+# Glob patterns for package discovery
+packages = ["packages/*"]
+# infra = ["infra/*"]
+
+# Exclude specific packages
+exclude = []
+
+[git]
+# Protected branches that require special handling
+protected_branches = ["main", "master"]
+default_pr_base = "main"
+
+[environments]
+# Available environments
+available = ["dev", "prod"]
+default = "dev"
+
+[services]
+# Service name = container port mapping
+# Example: api = 8080
+
+# =============================================================================
+# Features (for kitchen sink CLI)
+# =============================================================================
+# Enable/disable devkit extensions. Only applies when using kitchen sink CLI.
+# Custom CLI mode ignores this section (you control features in Cargo.toml).
+
+[features]
+# Docker operations (compose up/down, logs, shell)
+docker = true
+
+# Database operations (migrate, seed, reset, shell)
+database = true
+
+# Code quality (fmt, lint, test)
+quality = true
+
+# CI/CD integration (GitHub Actions)
+ci = false
+
+# Environment variable management (pull/push from ESC, secrets)
+env = false
+
+# Cloud deployment (Pulumi, ECS, etc.)
+deploy = false
+
+# HTTP tunneling (ngrok-style)
+tunnel = false
+
+# Mobile development (Expo, EAS)
+mobile = false
+
+# Benchmarking and load testing
+benchmark = false
+
+# Git workflows (branch management, PR, releases)
+git_workflows = false
+
+# Monitoring and observability
+monitoring = false
+
+[defaults]
+# Default values for CLI commands
+release_list_count = 5

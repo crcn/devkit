@@ -1,0 +1,26 @@
+# =============================================================================
+# Package Dev Configuration (Node/TypeScript)
+# =============================================================================
+# Package name inferred from package.json
+
+# =============================================================================
+# Commands
+# =============================================================================
+
+[cmd.typecheck]
+default = "npx tsc --noEmit"
+
+[cmd.lint]
+default = "npx eslint src"
+fix = "npx eslint src --fix"
+
+[cmd.fmt]
+default = "npx prettier --check src/**/*.{ts,tsx,js,jsx}"
+fix = "npx prettier --write src/**/*.{ts,tsx,js,jsx}"
+
+[cmd.build]
+default = "npx tsc"
+watch = "npx tsc --watch"
+
+[cmd]
+test = "npx jest"

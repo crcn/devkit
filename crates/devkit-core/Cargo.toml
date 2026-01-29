@@ -9,6 +9,7 @@ description = "Core types and utilities for devkit"
 
 [dependencies]
 anyhow.workspace = true
+thiserror.workspace = true
 console.workspace = true
 dialoguer.workspace = true
 dirs.workspace = true
@@ -19,3 +20,4 @@ toml.workspace = true
 glob.workspace = true
 which.workspace = true
 dotenvy.workspace = true
+tracing.workspace = true

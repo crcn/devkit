@@ -5,18 +5,36 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Default CLI binary for devkit"
+description = "Kitchen sink CLI binary for devkit"
 
 [[bin]]
 name = "devkit"
 path = "src/main.rs"
 
+[features]
+default = ["deps", "docker", "database", "quality"]
+all = ["deps", "docker", "database", "quality"]
+
+# Individual feature flags
+deps = ["devkit-ext-deps"]
+docker = ["devkit-ext-docker"]
+database = ["devkit-ext-database"]
+quality = ["devkit-ext-quality"]
+
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
+clap_complete.workspace = true
 console.workspace = true
 dialoguer.workspace = true
-ctrlc.workspace = true
+dotenvy.workspace = true
 devkit-core.workspace = true
 devkit-tasks.workspace = true
-devkit-ext-docker = { path = "../../extensions/devkit-ext-docker" }
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# Optional extensions (enabled by features)
+devkit-ext-deps = { path = "../../extensions/devkit-ext-deps", optional = true }
+devkit-ext-docker = { path = "../../extensions/devkit-ext-docker", optional = true }
+devkit-ext-database = { path = "../../extensions/devkit-ext-database", optional = true }
+devkit-ext-quality = { path = "../../extensions/devkit-ext-quality", optional = true }

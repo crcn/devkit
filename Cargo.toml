@@ -4,8 +4,19 @@ members = [
     "crates/devkit-core",
     "crates/devkit-tasks",
     "crates/devkit-cli",
+    "extensions/devkit-ext-deps",
     "extensions/devkit-ext-docker",
-    "examples/custom-cli",
+    "extensions/devkit-ext-quality",
+    "extensions/devkit-ext-test",
+    "extensions/devkit-ext-ci",
+    "extensions/devkit-ext-git",
+    "extensions/devkit-ext-database",
+    "extensions/devkit-ext-tunnel",
+    "extensions/devkit-ext-benchmark",
+    "extensions/devkit-ext-env",
+    "extensions/devkit-ext-ecs",
+    "extensions/devkit-ext-pulumi",
+    # "examples/custom-cli",  # TODO: Update after implementing missing docker functions
 ]
 
 [workspace.package]
@@ -18,7 +29,9 @@ repository = "https://github.com/crcn/devkit"
 [workspace.dependencies]
 # Common dependencies used across crates
 anyhow = "1.0"
+thiserror = "2.0"
 clap = { version = "4.5", features = ["derive"] }
+clap_complete = "4.5"
 console = "0.15"
 dialoguer = { version = "0.11", features = ["fuzzy-select"] }
 dirs = "5.0"
@@ -33,6 +46,8 @@ dotenvy = "0.15"
 fuzzy-matcher = "0.3"
 indicatif = "0.18"
 ctrlc = "3.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Internal crates
 devkit-core = { path = "crates/devkit-core", version = "0.1.0" }

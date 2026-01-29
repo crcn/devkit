@@ -1,6 +1,7 @@
 //! Shared utility functions
 
-use anyhow::{anyhow, Context, Result};
+use crate::error::{DevkitError, Result};
+use anyhow::Context;
 use std::env;
 use std::path::PathBuf;
 use which::which;
@@ -29,14 +30,8 @@ pub fn repo_root() -> Result<PathBuf> {
         }
     }
 
-    // Fallback to CARGO_MANIFEST_DIR inference
-    let manifest_dir =
-        PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string()));
-    Ok(manifest_dir
-        .parent()
-        .and_then(|p| p.parent())
-        .context("failed to infer repo root")?
-        .to_path_buf())
+    // No repo root found
+    Err(DevkitError::RepoRootNotFound)
 }
 
 /// Check if a command exists in PATH
@@ -52,7 +47,10 @@ pub fn docker_available() -> bool {
 /// Ensure docker is available, returning an error if not
 pub fn ensure_docker() -> Result<()> {
     if !docker_available() {
-        return Err(anyhow!("Docker is required for this operation."));
+        return Err(DevkitError::feature_not_available(
+            "docker".to_string(),
+            "Install Docker from https://docker.com".to_string(),
+        ));
     }
     Ok(())
 }
@@ -60,7 +58,10 @@ pub fn ensure_docker() -> Result<()> {
 /// Ensure cargo is available, returning an error if not
 pub fn ensure_cargo() -> Result<()> {
     if !cmd_exists("cargo") {
-        return Err(anyhow!("cargo not found (install Rust toolchain)"));
+        return Err(DevkitError::feature_not_available(
+            "cargo".to_string(),
+            "Install Rust from https://rustup.rs".to_string(),
+        ));
     }
     Ok(())
 }
@@ -99,7 +100,8 @@ pub fn docker_compose_program() -> Result<(String, Vec<String>)> {
     if cmd_exists("docker-compose") {
         return Ok(("docker-compose".to_string(), vec![]));
     }
-    Err(anyhow!(
-        "Docker Compose not found (`docker` or `docker-compose`)"
+    Err(DevkitError::feature_not_available(
+        "docker-compose".to_string(),
+        "Install Docker Compose from https://docs.docker.com/compose/install/".to_string(),
     ))
 }

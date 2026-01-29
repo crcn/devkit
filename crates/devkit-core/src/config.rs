@@ -15,7 +15,7 @@
 
 #![allow(dead_code)]
 
-use anyhow::{Context, Result};
+use crate::error::{DevkitError, Result};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
@@ -36,6 +36,7 @@ pub struct GlobalConfig {
     pub services: ServicesConfig,
     pub urls: UrlsConfig,
     pub defaults: DefaultsConfig,
+    pub features: FeaturesConfig,
 }
 
 #[derive(Debug, Deserialize)]
@@ -195,6 +196,41 @@ fn default_release_list_count() -> u32 {
     5
 }
 
+/// Feature flags for kitchen sink CLI
+#[derive(Debug, Deserialize)]
+#[serde(default)]
+pub struct FeaturesConfig {
+    pub docker: bool,
+    pub database: bool,
+    pub quality: bool,
+    pub ci: bool,
+    pub env: bool,
+    pub deploy: bool,
+    pub tunnel: bool,
+    pub mobile: bool,
+    pub benchmark: bool,
+    pub git_workflows: bool,
+    pub monitoring: bool,
+}
+
+impl Default for FeaturesConfig {
+    fn default() -> Self {
+        Self {
+            docker: true,
+            database: true,
+            quality: true,
+            ci: false,
+            env: false,
+            deploy: false,
+            tunnel: false,
+            mobile: false,
+            benchmark: false,
+            git_workflows: false,
+            monitoring: false,
+        }
+    }
+}
+
 // =============================================================================
 // Package Configuration (packages/*/dev.toml)
 // =============================================================================
@@ -292,7 +328,7 @@ pub struct CmdConfig {
 }
 
 impl<'de> Deserialize<'de> for CmdConfig {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
@@ -431,10 +467,10 @@ impl Config {
         }
 
         let content = std::fs::read_to_string(&config_path)
-            .with_context(|| format!("Failed to read {}", config_path.display()))?;
+            .map_err(|e| DevkitError::config_load(config_path.clone(), e.into()))?;
 
         toml::from_str(&content)
-            .with_context(|| format!("Failed to parse {}", config_path.display()))
+            .map_err(|e| DevkitError::config_parse(config_path, e))
     }
 
     /// Discover packages and load their configurations
@@ -448,7 +484,13 @@ impl Config {
             let full_pattern = repo_root.join(pattern);
             let pattern_str = full_pattern.to_string_lossy();
 
-            for entry in glob::glob(&pattern_str)? {
+            let entries = glob::glob(&pattern_str)
+                .map_err(|e| DevkitError::InvalidGlob {
+                    pattern: pattern.clone(),
+                    source: e,
+                })?;
+
+            for entry in entries {
                 let path = entry?;
                 if !path.is_dir() {
                     continue;
@@ -479,9 +521,9 @@ impl Config {
         let config_path = package_path.join("dev.toml");
         let toml_config: PackageToml = if config_path.exists() {
             let content = fs::read_to_string(&config_path)
-                .with_context(|| format!("Failed to read {}", config_path.display()))?;
+                .map_err(|e| DevkitError::config_load(config_path.clone(), e.into()))?;
             toml::from_str(&content)
-                .with_context(|| format!("Failed to parse {}", config_path.display()))?
+                .map_err(|e| DevkitError::config_parse(config_path, e))?
         } else {
             PackageToml::default()
         };

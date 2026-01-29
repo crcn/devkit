@@ -1,0 +1,27 @@
+# =============================================================================
+# Package Dev Configuration (Rust)
+# =============================================================================
+# Package name inferred from Cargo.toml
+
+# =============================================================================
+# Commands
+# =============================================================================
+
+[cmd.typecheck]
+default = "cargo check --all-targets"
+
+[cmd.lint]
+default = "cargo clippy --all-targets -- -D warnings"
+fix = "cargo clippy --fix --allow-dirty --allow-staged"
+
+[cmd.fmt]
+default = "cargo fmt --check"
+fix = "cargo fmt"
+
+[cmd.build]
+default = "cargo build"
+watch = "cargo watch -x build"
+release = "cargo build --release"
+
+[cmd]
+test = "cargo test"

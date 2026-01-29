@@ -1,0 +1,5 @@
+[project]
+# Missing name
+
+[workspaces]
+packages = ["[invalid-glob"]

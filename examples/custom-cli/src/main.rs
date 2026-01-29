@@ -11,6 +11,11 @@ use console::style;
 use devkit_core::AppContext;
 use dialoguer::Select;
 
+// Helper to convert devkit errors to anyhow
+fn to_anyhow<T>(result: devkit_core::Result<T>) -> Result<T> {
+    result.map_err(|e| e.into())
+}
+
 #[derive(Parser)]
 #[command(name = "dev")]
 #[command(about = "Example project development CLI")]
@@ -82,16 +87,16 @@ fn run_command(ctx: &AppContext, cmd: Commands) -> Result<()> {
 
         Commands::Stop => {
             if ctx.features.docker {
-                devkit_ext_docker::compose_down(ctx)?;
+                to_anyhow(devkit_ext_docker::compose_down(ctx))?;
             }
             Ok(())
         }
 
         Commands::Docker { action } => match action {
-            DockerAction::Up => devkit_ext_docker::compose_up(ctx, &[], false),
-            DockerAction::Down => devkit_ext_docker::compose_down(ctx),
+            DockerAction::Up => to_anyhow(devkit_ext_docker::compose_up(ctx, &[], false)),
+            DockerAction::Down => to_anyhow(devkit_ext_docker::compose_down(ctx)),
             DockerAction::Logs => {
-                let containers = devkit_ext_docker::list_running_containers(ctx)?;
+                let containers = to_anyhow(devkit_ext_docker::list_running_containers(ctx))?;
                 if let Some(c) = containers.first() {
                     devkit_ext_docker::follow_logs(ctx, &c.id)
                 } else {

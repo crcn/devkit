@@ -5,12 +5,9 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Docker and Docker Compose extension for devkit"
+description = "Docker compose operations for devkit"
 
 [dependencies]
 anyhow.workspace = true
-console.workspace = true
-dialoguer.workspace = true
-indicatif.workspace = true
 devkit-core.workspace = true
-devkit-tasks.workspace = true
+indicatif.workspace = true

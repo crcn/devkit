@@ -80,28 +80,46 @@ Full CLI with all commands
 
 ## Quick Start
 
-### Installation (when published)
+### 🚀 One-Line Install (rustup-style!)
+
 ```bash
-cargo install devkit-cli
+curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | sh
 ```
 
-### Initialize Your Project
-```bash
-cd your-project
-devkit init
-```
-
-This creates:
-- `dev.sh` - Auto-installs Rust and devkit, then runs commands
-- `.dev/config.toml` - Global config with detected values
-- Sample `dev.toml` files (optional)
+This automatically:
+- ✅ Creates `dev.sh` wrapper (auto-installs Rust if needed)
+- ✅ Scaffolds `dev/cli/` with your custom CLI
+- ✅ Creates `.dev/config.toml` with sensible defaults
+- ✅ Detects your project type (Rust/Node/Docker)
+- ✅ Adds example `dev.toml` to packages
 
 ### Run Commands
 ```bash
 ./dev.sh              # Interactive menu
-./dev.sh cmd test     # Run tests
-./dev.sh cmd build    # Build packages
+./dev.sh start        # Start development environment
+./dev.sh cmd build    # Run package build commands
+./dev.sh cmd test     # Run package tests
+./dev.sh doctor       # Check system health
 ```
+
+### How It Works
+
+1. **`dev.sh`** - Lightweight wrapper that:
+   - Ensures Rust is installed
+   - Builds your CLI in release mode (once)
+   - Caches binary, rebuilds only on changes
+
+2. **`dev/cli`** - Your custom CLI project:
+   - Starts with sensible defaults
+   - Add devkit extensions you need
+   - Customize for your project
+   - Commit to your repo
+
+3. **`.dev/config.toml`** - Project configuration:
+   - Workspace package discovery
+   - Environment settings
+   - Service ports
+   - URL shortcuts
 
 ## Configuration
 

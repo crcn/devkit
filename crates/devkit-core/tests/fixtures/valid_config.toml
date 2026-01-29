@@ -1,0 +1,13 @@
+[project]
+name = "test-project"
+
+[workspaces]
+packages = ["packages/*"]
+
+[environments]
+available = ["dev", "prod"]
+default = "dev"
+
+[services]
+api = 8080
+postgres = 5432
