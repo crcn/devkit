@@ -144,7 +144,7 @@ fn run() -> Result<()> {
     #[cfg(feature = "deps")]
     {
         use devkit_core::ExtensionRegistry;
-        let mut registry = ExtensionRegistry::new();
+        let mut registry = ExtensionRegistry::with_external_extensions(&ctx.repo);
         registry.register(Box::new(devkit_ext_deps::DepsExtension));
 
         // Run prerun hooks (auto-install dependencies, etc.)
@@ -314,7 +314,7 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
     use std::collections::HashMap;
 
     // Create extension registry and register all extensions
-    let mut registry = ExtensionRegistry::new();
+    let mut registry = ExtensionRegistry::with_external_extensions(&ctx.repo);
 
     #[cfg(feature = "docker")]
     registry.register(Box::new(devkit_ext_docker::DockerExtension));

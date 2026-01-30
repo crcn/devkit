@@ -1,0 +1,32 @@
+# Example extension configuration
+# Place this as config.toml in .dev/extensions/{extension-name}/
+
+name = "my-extension"
+version = "1.0.0"
+description = "Custom team workflows"
+
+# Define actions that appear in the devkit menu
+[[action]]
+id = "hello"
+label = "👋 Say Hello"
+group = "Custom"
+description = "Simple hello world action"
+command = "hello.sh"  # Path relative to extension directory
+
+[[action]]
+id = "deploy"
+label = "🚀 Deploy"
+group = "Deploy"
+description = "Deploy to production"
+command = "deploy.sh"
+args = ["--production"]  # Optional command arguments
+
+[[action]]
+id = "status"
+label = "📊 Check Status"
+group = "Custom"
+description = "Check system status"
+command = "status.py"
+# Optional environment variables
+[action.env]
+CHECK_TIMEOUT = "30"

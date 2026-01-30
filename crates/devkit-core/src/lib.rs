@@ -5,6 +5,8 @@ pub mod context;
 pub mod detection;
 pub mod error;
 pub mod extension;
+pub mod extension_loader;
+pub mod external_extension;
 pub mod history;
 pub mod init;
 pub mod output;

@@ -1,0 +1,17 @@
+name = "test"
+version = "1.0.0"
+description = "Test extension to verify TOML-based extension system"
+
+[[action]]
+id = "hello"
+label = "👋 Test: Say Hello"
+group = "Test"
+description = "Simple test action that prints environment info"
+command = "hello.sh"
+
+[[action]]
+id = "info"
+label = "ℹ️ Test: Show Info"
+group = "Test"
+description = "Display devkit context information"
+command = "info.sh"

@@ -63,6 +63,25 @@ impl ExtensionRegistry {
         }
     }
 
+    /// Create registry with external extensions loaded
+    pub fn with_external_extensions(repo_root: &std::path::Path) -> Self {
+        let mut registry = Self::new();
+
+        // Load external extensions
+        match crate::extension_loader::load_external_extensions(repo_root) {
+            Ok(extensions) => {
+                for ext in extensions {
+                    registry.register(ext);
+                }
+            }
+            Err(e) => {
+                tracing::warn!("Failed to load external extensions: {}", e);
+            }
+        }
+
+        registry
+    }
+
     pub fn register(&mut self, extension: Box<dyn Extension>) {
         self.extensions.push(extension);
     }
