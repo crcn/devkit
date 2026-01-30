@@ -9,5 +9,8 @@ description = "Docker compose operations for devkit"
 
 [dependencies]
 anyhow.workspace = true
+console.workspace = true
 devkit-core.workspace = true
+devkit-tasks.workspace = true
+dialoguer.workspace = true
 indicatif.workspace = true

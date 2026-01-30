@@ -142,6 +142,12 @@ Configuration validation failed:
 ✓ Containers started
 ```
 
+**Searchable Interactive Menu**
+```
+Run devkit without arguments to open an interactive menu.
+Type to filter options in real-time - perfect for finding commands quickly!
+```
+
 **Shell Completions**
 ```bash
 devkit completions bash > /etc/bash_completion.d/devkit
@@ -231,7 +237,7 @@ cargo build --release
 
 ### Run Commands
 ```bash
-devkit                    # Interactive menu
+devkit                    # Interactive menu (type to search/filter options)
 devkit start             # Start development environment
 devkit docker up         # Start Docker containers
 devkit cmd build         # Run package build commands

@@ -416,7 +416,7 @@ fn handle_deps(ctx: &AppContext, list: bool) -> Result<()> {
 }
 
 fn interactive_menu(ctx: &AppContext) -> Result<()> {
-    use dialoguer::Select;
+    use dialoguer::FuzzySelect;
 
     // Create extension registry and register all extensions
     let mut registry = ExtensionRegistry::new();
@@ -484,8 +484,8 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
         display.push("❌ Exit".to_string());
 
         println!();
-        let choice = Select::with_theme(&ctx.theme())
-            .with_prompt("What would you like to do?")
+        let choice = FuzzySelect::with_theme(&ctx.theme())
+            .with_prompt("What would you like to do? (type to filter)")
             .items(&display)
             .default(0)
             .interact()?;
