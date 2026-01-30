@@ -12,22 +12,17 @@ name = "devkit"
 path = "src/main.rs"
 
 [features]
-default = ["commands", "deps", "docker", "database", "git", "tunnel", "env", "benchmark", "ecs", "pulumi", "ci"]
-all = ["commands", "deps", "docker", "database", "quality", "git", "tunnel", "env", "benchmark", "ecs", "pulumi", "test", "ci"]
+default = ["commands", "deps", "docker", "database", "git", "ecs", "pulumi", "ci"]
+all = ["commands", "deps", "docker", "database", "git", "ecs", "pulumi", "ci"]
 
 # Individual feature flags
 commands = ["devkit-ext-commands"]
 deps = ["devkit-ext-deps"]
 docker = ["devkit-ext-docker"]
 database = ["devkit-ext-database"]
-quality = ["devkit-ext-quality"]
 git = ["devkit-ext-git"]
-tunnel = ["devkit-ext-tunnel"]
-env = ["devkit-ext-env"]
-benchmark = ["devkit-ext-benchmark"]
 ecs = ["devkit-ext-ecs"]
 pulumi = ["devkit-ext-pulumi"]
-test = ["devkit-ext-test"]
 ci = ["devkit-ext-ci"]
 
 [dependencies]
@@ -48,12 +43,7 @@ devkit-ext-commands = { path = "../../extensions/devkit-ext-commands", optional 
 devkit-ext-deps = { path = "../../extensions/devkit-ext-deps", optional = true }
 devkit-ext-docker = { path = "../../extensions/devkit-ext-docker", optional = true }
 devkit-ext-database = { path = "../../extensions/devkit-ext-database", optional = true }
-devkit-ext-quality = { path = "../../extensions/devkit-ext-quality", optional = true }
 devkit-ext-git = { path = "../../extensions/devkit-ext-git", optional = true }
-devkit-ext-tunnel = { path = "../../extensions/devkit-ext-tunnel", optional = true }
-devkit-ext-env = { path = "../../extensions/devkit-ext-env", optional = true }
-devkit-ext-benchmark = { path = "../../extensions/devkit-ext-benchmark", optional = true }
 devkit-ext-ecs = { path = "../../extensions/devkit-ext-ecs", optional = true }
 devkit-ext-pulumi = { path = "../../extensions/devkit-ext-pulumi", optional = true }
-devkit-ext-test = { path = "../../extensions/devkit-ext-test", optional = true }
 devkit-ext-ci = { path = "../../extensions/devkit-ext-ci", optional = true }

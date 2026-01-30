@@ -23,18 +23,6 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Start development environment
-    Start,
-
-    /// Stop all services
-    Stop,
-
-    /// Show environment status
-    Status,
-
-    /// Check system prerequisites
-    Doctor,
-
     /// Run package-defined commands
     Cmd {
         /// Command name (e.g., build, test, lint)
@@ -62,28 +50,6 @@ enum Commands {
     Database {
         #[command(subcommand)]
         action: DbAction,
-    },
-
-    /// Code quality tools (if enabled)
-    #[cfg(feature = "quality")]
-    Fmt {
-        /// Auto-fix formatting issues
-        #[arg(long)]
-        fix: bool,
-    },
-
-    #[cfg(feature = "quality")]
-    Lint {
-        /// Auto-fix lint issues
-        #[arg(long)]
-        fix: bool,
-    },
-
-    #[cfg(feature = "quality")]
-    Test {
-        /// Watch for changes
-        #[arg(short, long)]
-        watch: bool,
     },
 
     /// Dependency management (if enabled)
@@ -193,10 +159,6 @@ fn run() -> Result<()> {
     let features = &ctx.features;
 
     match cli.command {
-        Some(Commands::Start) => cmd_start(&ctx),
-        Some(Commands::Stop) => cmd_stop(&ctx),
-        Some(Commands::Status) => cmd_status(&ctx),
-        Some(Commands::Doctor) => cmd_doctor(&ctx),
         Some(Commands::Cmd {
             command,
             parallel,
@@ -209,15 +171,6 @@ fn run() -> Result<()> {
 
         #[cfg(feature = "database")]
         Some(Commands::Database { action }) if features.database => handle_database(&ctx, action),
-
-        #[cfg(feature = "quality")]
-        Some(Commands::Fmt { fix }) if features.commands => handle_fmt(&ctx, fix),
-
-        #[cfg(feature = "quality")]
-        Some(Commands::Lint { fix }) if features.commands => handle_lint(&ctx, fix),
-
-        #[cfg(feature = "quality")]
-        Some(Commands::Test { watch }) if features.commands => handle_test(&ctx, watch),
 
         #[cfg(feature = "deps")]
         Some(Commands::Deps { list }) => handle_deps(&ctx, list),
@@ -258,84 +211,6 @@ fn generate_completions(shell: clap_complete::Shell) {
 
     let mut cmd = Cli::command();
     generate(shell, &mut cmd, "devkit", &mut io::stdout());
-}
-
-fn cmd_start(ctx: &AppContext) -> Result<()> {
-    ctx.print_header("Starting development environment");
-
-    // Docker (if enabled)
-    #[cfg(feature = "docker")]
-    if ctx.config.global.features.docker {
-        ctx.print_info("Starting Docker containers...");
-        // devkit_ext_docker::compose_up(ctx, &[], false)?;
-        ctx.print_success("✓ Docker containers started");
-    }
-
-    // Database (if enabled)
-    #[cfg(feature = "database")]
-    if ctx.config.global.features.database {
-        ctx.print_info("Running migrations...");
-        // devkit_ext_database::migrate(ctx)?;
-        ctx.print_success("✓ Database migrated");
-    }
-
-    ctx.print_success("✓ Development environment ready!");
-    Ok(())
-}
-
-fn cmd_stop(ctx: &AppContext) -> Result<()> {
-    ctx.print_header("Stopping development environment");
-
-    #[cfg(feature = "docker")]
-    if ctx.config.global.features.docker {
-        // devkit_ext_docker::compose_down(ctx)?;
-        ctx.print_success("✓ Docker containers stopped");
-    }
-
-    Ok(())
-}
-
-fn cmd_status(ctx: &AppContext) -> Result<()> {
-    ctx.print_header("Development Environment Status");
-    println!();
-    println!("Repository: {}", ctx.repo.display());
-    println!("Project: {}", ctx.config.global.project.name);
-    println!();
-
-    println!("Features:");
-    let features = &ctx.features;
-    println!("  Docker: {}", if features.docker { "✓" } else { "✗" });
-    println!("  Database: {}", if features.database { "✓" } else { "✗" });
-    println!("  Git: {}", if features.git { "✓" } else { "✗" });
-    println!("  Cargo: {}", if features.cargo { "✓" } else { "✗" });
-    println!("  Node: {}", if features.node { "✓" } else { "✗" });
-    println!();
-
-    ctx.print_success("✓ Configuration loaded");
-    Ok(())
-}
-
-fn cmd_doctor(ctx: &AppContext) -> Result<()> {
-    ctx.print_header("System Health Check");
-    println!();
-
-    let tools = vec![
-        ("git", devkit_core::utils::cmd_exists("git")),
-        ("cargo", devkit_core::utils::cmd_exists("cargo")),
-        ("docker", devkit_core::utils::docker_available()),
-    ];
-
-    for (tool, available) in tools {
-        if available {
-            ctx.print_success(&format!("✓ {}", tool));
-        } else {
-            ctx.print_warning(&format!("✗ {} (not found)", tool));
-        }
-    }
-
-    println!();
-    ctx.print_success("Health check complete");
-    Ok(())
 }
 
 fn cmd_run(
@@ -423,28 +298,6 @@ fn handle_database(ctx: &AppContext, action: DbAction) -> Result<()> {
     }
 }
 
-#[cfg(feature = "quality")]
-fn handle_fmt(ctx: &AppContext, fix: bool) -> Result<()> {
-    use devkit_ext_quality;
-    devkit_ext_quality::fmt(ctx, fix)
-}
-
-#[cfg(feature = "quality")]
-fn handle_lint(ctx: &AppContext, fix: bool) -> Result<()> {
-    use devkit_ext_quality;
-    devkit_ext_quality::lint(ctx, fix)
-}
-
-#[cfg(feature = "quality")]
-fn handle_test(ctx: &AppContext, watch: bool) -> Result<()> {
-    use devkit_ext_quality;
-    if watch {
-        devkit_ext_quality::test_watch(ctx)
-    } else {
-        devkit_ext_quality::test(ctx)
-    }
-}
-
 #[cfg(feature = "deps")]
 fn handle_deps(ctx: &AppContext, list: bool) -> Result<()> {
     use devkit_ext_deps;
@@ -468,32 +321,17 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
     #[cfg(feature = "database")]
     registry.register(Box::new(devkit_ext_database::DatabaseExtension));
 
-    #[cfg(feature = "quality")]
-    registry.register(Box::new(devkit_ext_quality::QualityExtension));
-
     #[cfg(feature = "deps")]
     registry.register(Box::new(devkit_ext_deps::DepsExtension));
 
     #[cfg(feature = "git")]
     registry.register(Box::new(devkit_ext_git::GitExtension));
 
-    #[cfg(feature = "tunnel")]
-    registry.register(Box::new(devkit_ext_tunnel::TunnelExtension));
-
-    #[cfg(feature = "env")]
-    registry.register(Box::new(devkit_ext_env::EnvExtension));
-
-    #[cfg(feature = "benchmark")]
-    registry.register(Box::new(devkit_ext_benchmark::BenchmarkExtension));
-
     #[cfg(feature = "ecs")]
     registry.register(Box::new(devkit_ext_ecs::EcsExtension));
 
     #[cfg(feature = "pulumi")]
     registry.register(Box::new(devkit_ext_pulumi::PulumiExtension));
-
-    #[cfg(feature = "test")]
-    registry.register(Box::new(devkit_ext_test::TestExtension));
 
     #[cfg(feature = "ci")]
     registry.register(Box::new(devkit_ext_ci::CiExtension));
@@ -506,26 +344,10 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
         let menu_items = registry.menu_items(ctx);
         let mut display: Vec<String> = vec![];
 
-        // Core commands (always available)
-        display.push("▶  Start development environment".to_string());
-        display.push("⏹  Stop services".to_string());
-
-        // Package commands (if any packages define them)
-        if ctx.features.commands {
-            display.push("⚙  Run package commands".to_string());
-        }
-
         // Extension menu items (automatically populated based on availability)
         for item in &menu_items {
             display.push(item.label.clone());
         }
-
-        // Utilities
-        display.push("📊 Status".to_string());
-        display.push("🩺 Doctor".to_string());
-
-        // Exit
-        display.push("❌ Exit".to_string());
 
         println!();
         let choice = FuzzySelect::with_theme(&ctx.theme())
@@ -534,34 +356,12 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
             .default(0)
             .interact()?;
 
-        // Handle core commands
-        let result = if choice == 0 {
-            cmd_start(ctx)
-        } else if choice == 1 {
-            cmd_stop(ctx)
-        } else if choice == 2 && ctx.features.commands {
+        // Handle menu item selection
+        let result: Result<()> = if choice < menu_items.len() {
             println!();
-            cmd_run(ctx, None, false, vec![], true)
-        } else if choice == display.len() - 3 {
-            println!();
-            cmd_status(ctx)
-        } else if choice == display.len() - 2 {
-            println!();
-            cmd_doctor(ctx)?;
-            Ok(())
-        } else if choice == display.len() - 1 {
-            break;
+            (menu_items[choice].handler)(ctx).map_err(Into::into)
         } else {
-            // Extension menu item - calculate offset
-            let offset = if ctx.features.commands { 3 } else { 2 };
-            let ext_idx = choice - offset;
-
-            if ext_idx < menu_items.len() {
-                println!();
-                (menu_items[ext_idx].handler)(ctx).map_err(Into::into)
-            } else {
-                Ok(())
-            }
+            Ok(())
         };
 
         if let Err(e) = result {
@@ -569,8 +369,6 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
             ctx.print_error(&format!("Error: {:#}", e));
         }
     }
-
-    Ok(())
 }
 
 fn cmd_update(ctx: &AppContext, force: bool) -> Result<()> {
