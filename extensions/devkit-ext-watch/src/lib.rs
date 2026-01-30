@@ -19,6 +19,7 @@ impl Extension for WatchExtension {
     fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![MenuItem {
             label: "👁  Start file watcher".to_string(),
+                group: None,
             handler: Box::new(|ctx| start_watcher(ctx).map_err(Into::into)),
         }]
     }

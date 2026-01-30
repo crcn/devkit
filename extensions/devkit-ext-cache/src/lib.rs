@@ -26,10 +26,12 @@ impl Extension for CacheExtension {
         vec![
             MenuItem {
                 label: "🗑  Clean all build caches".to_string(),
+                group: None,
                 handler: Box::new(|ctx| clean_all(ctx).map_err(Into::into)),
             },
             MenuItem {
                 label: "📊 Show cache statistics".to_string(),
+                group: None,
                 handler: Box::new(|ctx| show_stats(ctx).map_err(Into::into)),
             },
         ]

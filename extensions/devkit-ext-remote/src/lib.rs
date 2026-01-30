@@ -21,10 +21,12 @@ impl Extension for RemoteExtension {
         vec![
             MenuItem {
                 label: "🌐 Connect to remote".to_string(),
+                group: None,
                 handler: Box::new(|ctx| connect_remote(ctx).map_err(Into::into)),
             },
             MenuItem {
                 label: "🔄 Sync files to remote".to_string(),
+                group: None,
                 handler: Box::new(|ctx| sync_to_remote(ctx).map_err(Into::into)),
             },
         ]

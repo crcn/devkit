@@ -68,6 +68,7 @@ impl Extension for CommandsExtension {
 
                 items.push(MenuItem {
                     label,
+                    group: None,
                     handler: Box::new(move |ctx| {
                         execute_command(ctx, &cmd_name_owned, variant_owned.as_deref())
                     }),

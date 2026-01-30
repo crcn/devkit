@@ -24,10 +24,12 @@ impl Extension for SecretsExtension {
         vec![
             MenuItem {
                 label: "🔐 Pull secrets to .env".to_string(),
+                group: None,
                 handler: Box::new(|ctx| pull_secrets(ctx).map_err(Into::into)),
             },
             MenuItem {
                 label: "📋 List available secrets".to_string(),
+                group: None,
                 handler: Box::new(|ctx| list_secrets(ctx).map_err(Into::into)),
             },
         ]

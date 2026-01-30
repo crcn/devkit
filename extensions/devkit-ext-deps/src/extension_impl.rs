@@ -20,6 +20,7 @@ impl Extension for DepsExtension {
         use devkit_core::DevkitError;
         vec![MenuItem {
             label: "📦 Install dependencies".to_string(),
+            group: None,
             handler: Box::new(|ctx| {
                 println!();
                 check_and_install(ctx).map_err(DevkitError::from)

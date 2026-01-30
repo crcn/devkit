@@ -311,6 +311,7 @@ fn handle_deps(ctx: &AppContext, list: bool) -> Result<()> {
 
 fn interactive_menu(ctx: &AppContext) -> Result<()> {
     use dialoguer::FuzzySelect;
+    use std::collections::{HashMap, HashSet};
 
     // Create extension registry and register all extensions
     let mut registry = ExtensionRegistry::new();
@@ -339,15 +340,78 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
     #[cfg(feature = "commands")]
     registry.register(Box::new(devkit_ext_commands::CommandsExtension));
 
-    loop {
-        // Build menu dynamically - extensions auto-register their items!
-        let menu_items = registry.menu_items(ctx);
-        let mut display: Vec<String> = vec![];
+    // Start with all groups expanded for better discoverability and filtering
+    let menu_items_initial = registry.menu_items(ctx);
+    let mut expanded_groups: HashSet<String> = HashSet::new();
 
-        // Extension menu items (automatically populated based on availability)
-        for item in &menu_items {
-            display.push(item.label.clone());
+    // Auto-expand all groups initially
+    for item in &menu_items_initial {
+        if let Some(group) = &item.group {
+            expanded_groups.insert(group.clone());
         }
+    }
+
+    loop {
+        // Build menu dynamically
+        let menu_items = registry.menu_items(ctx);
+
+        // Group items by their group field
+        let mut groups: HashMap<String, Vec<usize>> = HashMap::new();
+        let mut ungrouped: Vec<usize> = vec![];
+
+        for (idx, item) in menu_items.iter().enumerate() {
+            if let Some(group) = &item.group {
+                groups.entry(group.clone()).or_default().push(idx);
+            } else {
+                ungrouped.push(idx);
+            }
+        }
+
+        // Build display list
+        #[derive(Clone)]
+        enum DisplayItem {
+            GroupHeader(String),
+            Item(usize),
+            Exit,
+        }
+
+        let mut display: Vec<String> = vec![];
+        let mut display_mapping: Vec<DisplayItem> = vec![];
+
+        // Add ungrouped items first
+        for &idx in &ungrouped {
+            display.push(menu_items[idx].label.clone());
+            display_mapping.push(DisplayItem::Item(idx));
+        }
+
+        // Add groups (sorted for consistent ordering)
+        let mut group_names: Vec<_> = groups.keys().cloned().collect();
+        group_names.sort();
+
+        for group_name in group_names {
+            let indices = &groups[&group_name];
+            let is_expanded = expanded_groups.contains(&group_name);
+
+            if is_expanded {
+                // Show group header with ▼ indicator
+                display.push(format!("▼ {}", group_name));
+                display_mapping.push(DisplayItem::GroupHeader(group_name.clone()));
+
+                // Show all items in group with indentation
+                for &idx in indices {
+                    display.push(format!("  {}", menu_items[idx].label));
+                    display_mapping.push(DisplayItem::Item(idx));
+                }
+            } else {
+                // Show collapsed group with ▶ indicator
+                display.push(format!("▶ {}", group_name));
+                display_mapping.push(DisplayItem::GroupHeader(group_name));
+            }
+        }
+
+        // Add exit option
+        display.push("❌ Exit".to_string());
+        display_mapping.push(DisplayItem::Exit);
 
         println!();
         let choice = FuzzySelect::with_theme(&ctx.theme())
@@ -356,19 +420,31 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
             .default(0)
             .interact()?;
 
-        // Handle menu item selection
-        let result: Result<()> = if choice < menu_items.len() {
-            println!();
-            (menu_items[choice].handler)(ctx).map_err(Into::into)
-        } else {
-            Ok(())
-        };
-
-        if let Err(e) = result {
-            println!();
-            ctx.print_error(&format!("Error: {:#}", e));
+        // Handle selection
+        match &display_mapping[choice] {
+            DisplayItem::GroupHeader(group_name) => {
+                // Toggle group expansion
+                if expanded_groups.contains(group_name) {
+                    expanded_groups.remove(group_name);
+                } else {
+                    expanded_groups.insert(group_name.clone());
+                }
+            }
+            DisplayItem::Item(idx) => {
+                println!();
+                let result: Result<()> = (menu_items[*idx].handler)(ctx).map_err(Into::into);
+                if let Err(e) = result {
+                    println!();
+                    ctx.print_error(&format!("Error: {:#}", e));
+                }
+            }
+            DisplayItem::Exit => {
+                break;
+            }
         }
     }
+
+    Ok(())
 }
 
 fn cmd_update(ctx: &AppContext, force: bool) -> Result<()> {

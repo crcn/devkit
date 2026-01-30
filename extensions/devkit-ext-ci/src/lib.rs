@@ -24,15 +24,18 @@ impl Extension for CiExtension {
     fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![
             MenuItem {
-                label: "🔄 CI - Status".to_string(),
+                label: "Status".to_string(),
+                group: Some("🔄 CI".to_string()),
                 handler: Box::new(|ctx| ci_status(ctx, None).map_err(Into::into)),
             },
             MenuItem {
-                label: "🔄 CI - Watch Latest".to_string(),
+                label: "Watch Latest".to_string(),
+                group: Some("🔄 CI".to_string()),
                 handler: Box::new(|ctx| ci_watch(ctx, None).map_err(Into::into)),
             },
             MenuItem {
-                label: "📋 CI - List Runs".to_string(),
+                label: "List Runs".to_string(),
+                group: Some("🔄 CI".to_string()),
                 handler: Box::new(|ctx| ci_runs(ctx, 10, None).map_err(Into::into)),
             },
         ]

@@ -21,10 +21,12 @@ impl Extension for PulumiExtension {
         vec![
             MenuItem {
                 label: "☁️  Pulumi - Preview".to_string(),
+                group: None,
                 handler: Box::new(|ctx| pulumi_preview(ctx, None).map_err(Into::into)),
             },
             MenuItem {
                 label: "☁️  Pulumi - Deploy (Up)".to_string(),
+                group: None,
                 handler: Box::new(|ctx| pulumi_up(ctx, None, false).map_err(Into::into)),
             },
         ]

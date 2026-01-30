@@ -33,6 +33,7 @@ impl Extension for DashboardExtension {
     fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![MenuItem {
             label: "📊 Open visual dashboard".to_string(),
+                group: None,
             handler: Box::new(|ctx| run_dashboard(ctx).map_err(Into::into)),
         }]
     }

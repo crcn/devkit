@@ -21,10 +21,12 @@ impl Extension for MonitoringExtension {
         vec![
             MenuItem {
                 label: "📊 Start monitoring stack".to_string(),
+                group: None,
                 handler: Box::new(|ctx| start_monitoring(ctx).map_err(Into::into)),
             },
             MenuItem {
                 label: "⏹  Stop monitoring stack".to_string(),
+                group: None,
                 handler: Box::new(|ctx| stop_monitoring(ctx).map_err(Into::into)),
             },
         ]

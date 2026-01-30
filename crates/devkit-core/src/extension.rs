@@ -11,6 +11,8 @@ use crate::{AppContext, Result};
 pub struct MenuItem {
     /// Display label (with emoji)
     pub label: String,
+    /// Optional group name for organizing menu items
+    pub group: Option<String>,
     /// Handler function
     pub handler: Box<dyn Fn(&AppContext) -> Result<()>>,
 }

@@ -26,11 +26,13 @@ impl Extension for GitExtension {
     fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![
             MenuItem {
-                label: "📊 Git - Status".to_string(),
+                label: "Status".to_string(),
+                group: Some("📊 Git".to_string()),
                 handler: Box::new(|ctx| git_status(ctx).map_err(Into::into)),
             },
             MenuItem {
-                label: "🚀 Git - Release (Patch)".to_string(),
+                label: "Release (Patch)".to_string(),
+                group: Some("📊 Git".to_string()),
                 handler: Box::new(|ctx| {
                     create_release(
                         ctx,
@@ -43,7 +45,8 @@ impl Extension for GitExtension {
                 }),
             },
             MenuItem {
-                label: "🚀 Git - Release (Minor)".to_string(),
+                label: "Release (Minor)".to_string(),
+                group: Some("📊 Git".to_string()),
                 handler: Box::new(|ctx| {
                     create_release(
                         ctx,
@@ -56,7 +59,8 @@ impl Extension for GitExtension {
                 }),
             },
             MenuItem {
-                label: "🚀 Git - Release (Major)".to_string(),
+                label: "Release (Major)".to_string(),
+                group: Some("📊 Git".to_string()),
                 handler: Box::new(|ctx| {
                     create_release(
                         ctx,

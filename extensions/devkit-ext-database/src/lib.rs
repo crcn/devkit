@@ -19,19 +19,23 @@ impl Extension for DatabaseExtension {
         use devkit_core::DevkitError;
         vec![
             MenuItem {
-                label: "🗄  Database - Migrate".to_string(),
+                label: "Migrate".to_string(),
+                group: Some("🗄  Database".to_string()),
                 handler: Box::new(|ctx| migrate(ctx).map_err(DevkitError::from)),
             },
             MenuItem {
-                label: "🗄  Database - Reset".to_string(),
+                label: "Reset".to_string(),
+                group: Some("🗄  Database".to_string()),
                 handler: Box::new(|ctx| reset(ctx).map_err(DevkitError::from)),
             },
             MenuItem {
-                label: "🗄  Database - Seed".to_string(),
+                label: "Seed".to_string(),
+                group: Some("🗄  Database".to_string()),
                 handler: Box::new(|ctx| seed(ctx).map_err(DevkitError::from)),
             },
             MenuItem {
-                label: "🗄  Database - Shell".to_string(),
+                label: "Shell".to_string(),
+                group: Some("🗄  Database".to_string()),
                 handler: Box::new(|ctx| shell(ctx).map_err(DevkitError::from)),
             },
         ]

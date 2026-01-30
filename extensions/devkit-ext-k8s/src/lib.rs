@@ -19,14 +19,17 @@ impl Extension for K8sExtension {
         vec![
             MenuItem {
                 label: "☸️  Show cluster status".to_string(),
+                group: None,
                 handler: Box::new(|ctx| cluster_status(ctx).map_err(Into::into)),
             },
             MenuItem {
                 label: "📋 List pods".to_string(),
+                group: None,
                 handler: Box::new(|ctx| list_pods(ctx).map_err(Into::into)),
             },
             MenuItem {
                 label: "📊 Get services".to_string(),
+                group: None,
                 handler: Box::new(|ctx| list_services(ctx).map_err(Into::into)),
             },
         ]

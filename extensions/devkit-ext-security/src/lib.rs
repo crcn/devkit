@@ -20,12 +20,14 @@ impl Extension for SecurityExtension {
     fn menu_items(&self, ctx: &AppContext) -> Vec<MenuItem> {
         let mut items = vec![MenuItem {
             label: "🔒 Run security scan".to_string(),
+                group: None,
             handler: Box::new(|ctx| security_scan(ctx).map_err(Into::into)),
         }];
 
         if ctx.features.cargo {
             items.push(MenuItem {
                 label: "🦀 Audit Rust dependencies".to_string(),
+                group: None,
                 handler: Box::new(|ctx| cargo_audit(ctx).map_err(Into::into)),
             });
         }
@@ -33,6 +35,7 @@ impl Extension for SecurityExtension {
         if ctx.features.node {
             items.push(MenuItem {
                 label: "📦 Audit npm dependencies".to_string(),
+                group: None,
                 handler: Box::new(|ctx| npm_audit(ctx).map_err(Into::into)),
             });
         }

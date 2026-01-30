@@ -26,27 +26,33 @@ impl Extension for DockerExtension {
     fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![
             MenuItem {
-                label: "🐳 Docker - Up".to_string(),
+                label: "Up".to_string(),
+                group: Some("🐳 Docker".to_string()),
                 handler: Box::new(|ctx| Ok(docker_up_interactive(ctx)?)),
             },
             MenuItem {
-                label: "🐳 Docker - Down".to_string(),
+                label: "Down".to_string(),
+                group: Some("🐳 Docker".to_string()),
                 handler: Box::new(|ctx| Ok(compose_down(ctx)?)),
             },
             MenuItem {
-                label: "🐳 Docker - Restart".to_string(),
+                label: "Restart".to_string(),
+                group: Some("🐳 Docker".to_string()),
                 handler: Box::new(|ctx| Ok(docker_restart_interactive(ctx)?)),
             },
             MenuItem {
-                label: "🐳 Docker - Logs".to_string(),
+                label: "Logs".to_string(),
+                group: Some("🐳 Docker".to_string()),
                 handler: Box::new(|ctx| Ok(docker_logs_interactive(ctx)?)),
             },
             MenuItem {
-                label: "🐳 Docker - Shell".to_string(),
+                label: "Shell".to_string(),
+                group: Some("🐳 Docker".to_string()),
                 handler: Box::new(|ctx| Ok(docker_shell_interactive(ctx)?)),
             },
             MenuItem {
-                label: "🐳 Docker - Build".to_string(),
+                label: "Build".to_string(),
+                group: Some("🐳 Docker".to_string()),
                 handler: Box::new(|ctx| Ok(docker_build_interactive(ctx)?)),
             },
         ]
