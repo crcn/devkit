@@ -44,6 +44,7 @@ notify-rust = "4.11"
 chrono = "0.4"
 ratatui = "0.28"
 crossterm = "0.28"
+ignore = "0.4"
 
 # Internal crates
 devkit-core = { path = "crates/devkit-core", version = "0.1.0" }

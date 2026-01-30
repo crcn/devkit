@@ -489,6 +489,16 @@ impl Config {
     ) -> Result<HashMap<String, PackageConfig>> {
         let mut packages = HashMap::new();
 
+        // Load .gitignore if it exists
+        let gitignore_path = repo_root.join(".gitignore");
+        let gitignore = if gitignore_path.exists() {
+            let mut builder = ignore::gitignore::GitignoreBuilder::new(repo_root);
+            let _ = builder.add(gitignore_path);
+            builder.build().ok()
+        } else {
+            None
+        };
+
         for pattern in &global.workspaces.packages {
             let full_pattern = repo_root.join(pattern);
             let pattern_str = full_pattern.to_string_lossy();
@@ -502,6 +512,14 @@ impl Config {
                 let path = entry?;
                 if !path.is_dir() {
                     continue;
+                }
+
+                // Check if path is ignored by .gitignore
+                if let Some(ref gi) = gitignore {
+                    let relative_path = path.strip_prefix(repo_root).unwrap_or(&path);
+                    if gi.matched(relative_path, true).is_ignore() {
+                        continue;
+                    }
                 }
 
                 let name = path

@@ -108,12 +108,24 @@ impl ScriptProvider {
     }
 
     /// Discover scripts in a directory
-    fn discover_in_directory(repo_root: &Path, dir: &str) -> Result<Vec<DiscoveredCommand>> {
+    fn discover_in_directory(
+        repo_root: &Path,
+        dir: &str,
+        gitignore: Option<&ignore::gitignore::Gitignore>,
+    ) -> Result<Vec<DiscoveredCommand>> {
         let mut commands = Vec::new();
         let dir_path = repo_root.join(dir);
 
         if !dir_path.exists() || !dir_path.is_dir() {
             return Ok(commands);
+        }
+
+        // Check if the directory itself is ignored
+        if let Some(gi) = gitignore {
+            let relative_path = dir_path.strip_prefix(repo_root).unwrap_or(&dir_path);
+            if gi.matched(relative_path, true).is_ignore() {
+                return Ok(commands);
+            }
         }
 
         for entry in fs::read_dir(&dir_path)? {
@@ -123,6 +135,14 @@ impl ScriptProvider {
             // Skip directories
             if path.is_dir() {
                 continue;
+            }
+
+            // Check if file is ignored by .gitignore
+            if let Some(gi) = gitignore {
+                let relative_path = path.strip_prefix(repo_root).unwrap_or(&path);
+                if gi.matched(relative_path, false).is_ignore() {
+                    continue;
+                }
             }
 
             // Check if executable
@@ -194,8 +214,18 @@ impl CommandProvider for ScriptProvider {
     fn discover(&self, ctx: &AppContext) -> Result<Vec<DiscoveredCommand>> {
         let mut commands = Vec::new();
 
+        // Load .gitignore if it exists
+        let gitignore_path = ctx.repo.join(".gitignore");
+        let gitignore = if gitignore_path.exists() {
+            let mut builder = ignore::gitignore::GitignoreBuilder::new(&ctx.repo);
+            let _ = builder.add(gitignore_path);
+            builder.build().ok()
+        } else {
+            None
+        };
+
         for dir in Self::script_directories() {
-            commands.extend(Self::discover_in_directory(&ctx.repo, dir)?);
+            commands.extend(Self::discover_in_directory(&ctx.repo, dir, gitignore.as_ref())?);
         }
 
         Ok(commands)
