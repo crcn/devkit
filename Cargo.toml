@@ -4,22 +4,7 @@ members = [
     "crates/devkit-core",
     "crates/devkit-tasks",
     "crates/devkit-cli",
-    "extensions/devkit-ext-deps",
     "extensions/devkit-ext-docker",
-    "extensions/devkit-ext-ci",
-    "extensions/devkit-ext-git",
-    "extensions/devkit-ext-database",
-    "extensions/devkit-ext-ecs",
-    "extensions/devkit-ext-pulumi",
-    "extensions/devkit-ext-cache",
-    "extensions/devkit-ext-secrets",
-    "extensions/devkit-ext-security",
-    "extensions/devkit-ext-k8s",
-    "extensions/devkit-ext-watch",
-    "extensions/devkit-ext-monitoring",
-    "extensions/devkit-ext-remote",
-    "extensions/devkit-ext-dashboard",
-    # "examples/custom-cli",  # TODO: Update after implementing missing docker functions
 ]
 
 [workspace.package]

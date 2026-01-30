@@ -1,466 +1,421 @@
-//! devkit Kitchen Sink CLI
+//! devkit - Universal command discovery and execution for any codebase
 //!
-//! A batteries-included development CLI that works out of the box.
-//! Configure features via .dev/config.toml - no Rust code required!
+//! Discovers and surfaces all available commands in a repository by scanning
+//! package managers, build tools, scripts, and services.
 
 use anyhow::Result;
-use clap::{Parser, Subcommand};
-use devkit_core::{AppContext, ExtensionRegistry};
+use clap::{CommandFactory, Parser, Subcommand};
+use clap_complete::{generate, Shell};
+use dialoguer::{theme::ColorfulTheme, FuzzySelect, MultiSelect};
+use std::collections::HashMap;
+use std::io;
 use std::process::ExitCode;
 
+use devkit_core::{
+    discovery::{
+        CargoProvider, CommandHistory, DiscoveryEngine, MakefileProvider, NpmProvider,
+        ScriptProvider,
+    },
+    AppContext, Category, ExtensionRegistry,
+};
+
 #[derive(Parser)]
-#[command(name = "dev")]
-#[command(about = "Development environment CLI - kitchen sink edition")]
+#[command(name = "devkit")]
+#[command(about = "Universal command discovery for any codebase", long_about = None)]
 #[command(version)]
 struct Cli {
-    /// Run in quiet mode (non-interactive)
-    #[arg(short, long, global = true)]
-    quiet: bool,
-
     #[command(subcommand)]
     command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Run package-defined commands
-    Cmd {
-        /// Command name (e.g., build, test, lint)
-        command: Option<String>,
-        /// Run in parallel where possible
-        #[arg(long)]
-        parallel: bool,
-        /// Only run for specific packages
-        #[arg(short, long)]
-        package: Vec<String>,
-        /// List all available commands
-        #[arg(long)]
-        list: bool,
-    },
-
-    /// Docker operations (if enabled)
-    #[cfg(feature = "docker")]
-    Docker {
-        #[command(subcommand)]
-        action: DockerAction,
-    },
-
-    /// Database operations (if enabled)
-    #[cfg(feature = "database")]
-    Database {
-        #[command(subcommand)]
-        action: DbAction,
-    },
-
-    /// Dependency management (if enabled)
-    #[cfg(feature = "deps")]
-    Deps {
-        /// List discovered packages
-        #[arg(long)]
-        list: bool,
-    },
-
-    /// Generate shell completions
-    Completions {
-        /// Shell to generate completions for
-        #[arg(value_enum)]
-        shell: clap_complete::Shell,
-    },
-
-    /// Check for updates
-    Update {
-        /// Force update check (ignore cache)
-        #[arg(long)]
-        force: bool,
-    },
-
-    /// Initialize a new devkit project
+    /// Initialize devkit in a new project
     Init {
         /// Skip interactive prompts
         #[arg(long)]
         no_interactive: bool,
     },
 
-    /// View command history
-    History {
-        /// Search pattern
-        search: Option<String>,
+    /// Generate shell completions
+    Completions {
+        /// Shell to generate completions for
+        shell: Shell,
     },
-}
 
-#[cfg(feature = "docker")]
-#[derive(Subcommand)]
-enum DockerAction {
-    Up,
-    Down,
-    Restart,
-    Logs { service: Option<String> },
-    Shell { service: Option<String> },
-}
-
-#[cfg(feature = "database")]
-#[derive(Subcommand)]
-enum DbAction {
-    Migrate,
-    Reset,
-    Seed,
-    Shell,
+    /// Check for updates
+    Update,
 }
 
 fn main() -> ExitCode {
-    let _ = dotenvy::dotenv();
+    let cli = Cli::parse();
 
-    // Initialize tracing
-    init_tracing();
-
-    if let Err(e) = run() {
+    if let Err(e) = run(cli) {
         eprintln!("Error: {:#}", e);
         return ExitCode::from(1);
     }
+
     ExitCode::SUCCESS
 }
 
-fn init_tracing() {
-    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-
-    // Allow override via RUST_LOG env var, default to info for devkit crates
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("devkit=info,devkit_core=info"));
-
-    tracing_subscriber::registry()
-        .with(filter)
-        .with(tracing_subscriber::fmt::layer().with_target(false))
-        .init();
-}
-
-fn run() -> Result<()> {
-    let mut cli = Cli::parse();
-    let ctx = AppContext::new(cli.quiet)?;
-
-    // Resolve command aliases
-    resolve_aliases(&mut cli, &ctx);
-
-    // Register and run prerun hooks from extensions
-    #[cfg(feature = "deps")]
-    {
-        use devkit_core::ExtensionRegistry;
-        let mut registry = ExtensionRegistry::new();
-        registry.register(Box::new(devkit_ext_deps::DepsExtension));
-
-        // Run prerun hooks (auto-install dependencies, etc.)
-        if let Err(e) = registry.run_prerun_hooks(&ctx) {
-            ctx.print_error(&format!("Prerun failed: {:#}", e));
-            return Err(e.into());
-        }
-    }
-
-    // Features are AUTO-DETECTED based on project structure
-    // No manual configuration needed!
-    let features = &ctx.features;
-
+fn run(cli: Cli) -> Result<()> {
+    // Handle subcommands
     match cli.command {
-        Some(Commands::Cmd {
-            command,
-            parallel,
-            package,
-            list,
-        }) => cmd_run(&ctx, command, parallel, package, list),
-
-        #[cfg(feature = "docker")]
-        Some(Commands::Docker { action }) if features.docker => handle_docker(&ctx, action),
-
-        #[cfg(feature = "database")]
-        Some(Commands::Database { action }) if features.database => handle_database(&ctx, action),
-
-        #[cfg(feature = "deps")]
-        Some(Commands::Deps { list }) => handle_deps(&ctx, list),
+        Some(Commands::Init { no_interactive }) => {
+            let ctx = AppContext::new(false)?;
+            devkit_core::init::init_project(&ctx.repo, !no_interactive)?;
+            return Ok(());
+        }
 
         Some(Commands::Completions { shell }) => {
             generate_completions(shell);
-            Ok(())
-        }
-
-        Some(Commands::Update { force }) => cmd_update(&ctx, force),
-
-        Some(Commands::Init { no_interactive }) => {
-            devkit_core::init::init_project(&ctx.repo, !no_interactive).map_err(Into::into)
-        }
-
-        Some(Commands::History { search }) => cmd_history(&ctx, search.as_deref()),
-
-        None => {
-            // Check for updates in background (non-blocking)
-            check_for_updates_background(&ctx);
-            interactive_menu(&ctx)
-        }
-
-        _ => {
-            ctx.print_warning("Feature not available in this project");
-            ctx.print_info(
-                "This command requires project setup (e.g., docker-compose.yml, database config)",
-            );
-            Ok(())
-        }
-    }
-}
-
-fn generate_completions(shell: clap_complete::Shell) {
-    use clap::CommandFactory;
-    use clap_complete::generate;
-    use std::io;
-
-    let mut cmd = Cli::command();
-    generate(shell, &mut cmd, "devkit", &mut io::stdout());
-}
-
-fn cmd_run(
-    ctx: &AppContext,
-    command: Option<String>,
-    parallel: bool,
-    packages: Vec<String>,
-    list: bool,
-) -> Result<()> {
-    use devkit_tasks::{list_commands, print_results, run_cmd, CmdOptions};
-
-    if list {
-        let commands = list_commands(&ctx.config);
-        if commands.is_empty() {
-            println!("No commands defined.");
-            println!();
-            println!("Add commands to package dev.toml files:");
-            println!();
-            println!("  [cmd]");
-            println!("  build = \"cargo build\"");
-            println!("  test = \"cargo test\"");
             return Ok(());
         }
 
-        println!("Available commands:");
-        println!();
-        for (cmd, pkgs) in commands {
-            println!("  {} ({})", cmd, pkgs.join(", "));
-        }
-        return Ok(());
-    }
-
-    let cmd_name = match command {
-        Some(c) => c,
-        None => {
-            ctx.print_warning("No command specified. Use --list to see available commands.");
+        Some(Commands::Update) => {
+            devkit_core::update::check_for_updates(false)?;
             return Ok(());
         }
-    };
 
-    let opts = CmdOptions {
-        parallel,
-        variant: None,
-        packages,
-        capture: false,
-    };
-
-    let results = run_cmd(ctx, &cmd_name, &opts)?;
-    print_results(ctx, &results);
-
-    if results.iter().any(|r| !r.success) {
-        return Err(anyhow::anyhow!("Some commands failed"));
-    }
-
-    Ok(())
-}
-
-#[cfg(feature = "docker")]
-fn handle_docker(ctx: &AppContext, action: DockerAction) -> Result<()> {
-    use devkit_ext_docker;
-
-    match action {
-        DockerAction::Up => devkit_ext_docker::compose_up(ctx, &[], false).map_err(Into::into),
-        DockerAction::Down => devkit_ext_docker::compose_down(ctx).map_err(Into::into),
-        DockerAction::Restart => devkit_ext_docker::compose_restart(ctx, &[]).map_err(Into::into),
-        DockerAction::Logs { service } => {
-            devkit_ext_docker::logs(ctx, service.as_deref()).map_err(Into::into)
-        }
-        DockerAction::Shell { service } => {
-            devkit_ext_docker::shell(ctx, service.as_deref()).map_err(Into::into)
+        None => {
+            // Interactive menu mode
         }
     }
-}
 
-#[cfg(feature = "database")]
-fn handle_database(ctx: &AppContext, action: DbAction) -> Result<()> {
-    use devkit_ext_database;
+    // Load context
+    let ctx = AppContext::new(false)?;
 
-    // Database functions return anyhow::Result, so no conversion needed
-    match action {
-        DbAction::Migrate => devkit_ext_database::migrate(ctx),
-        DbAction::Reset => devkit_ext_database::reset(ctx),
-        DbAction::Seed => devkit_ext_database::seed(ctx),
-        DbAction::Shell => devkit_ext_database::shell(ctx),
-    }
-}
-
-#[cfg(feature = "deps")]
-fn handle_deps(ctx: &AppContext, list: bool) -> Result<()> {
-    use devkit_ext_deps;
-    if list {
-        devkit_ext_deps::print_summary(ctx);
-        Ok(())
-    } else {
-        devkit_ext_deps::check_and_install(ctx)
-    }
-}
-
-fn interactive_menu(ctx: &AppContext) -> Result<()> {
-    use dialoguer::FuzzySelect;
-
-    // Create extension registry and register all extensions
-    let mut registry = ExtensionRegistry::new();
+    // Setup extension registry (rich interactive commands)
+    let mut extensions = ExtensionRegistry::new();
 
     #[cfg(feature = "docker")]
-    registry.register(Box::new(devkit_ext_docker::DockerExtension));
+    extensions.register(Box::new(devkit_ext_docker::DockerExtension));
 
-    #[cfg(feature = "database")]
-    registry.register(Box::new(devkit_ext_database::DatabaseExtension));
+    // Setup discovery engine (auto-discovered commands)
+    let mut engine = DiscoveryEngine::new();
+    engine.register(Box::new(CargoProvider::new()));
+    engine.register(Box::new(NpmProvider::new()));
+    engine.register(Box::new(MakefileProvider::new()));
+    engine.register(Box::new(ScriptProvider::new()));
 
-    #[cfg(feature = "deps")]
-    registry.register(Box::new(devkit_ext_deps::DepsExtension));
+    // Load command history
+    let mut history = CommandHistory::load(&ctx.repo).unwrap_or_default();
 
-    #[cfg(feature = "git")]
-    registry.register(Box::new(devkit_ext_git::GitExtension));
+    // Print header
+    println!();
+    println!("╭─────────────────────────────────────────╮");
+    println!("│  🚀 devkit - Command Discovery          │");
+    println!("╰─────────────────────────────────────────╯");
+    println!();
+    println!("Repository: {}", ctx.repo.display());
+    println!("Project: {}", ctx.config.global.project.name);
+    println!();
 
-    #[cfg(feature = "ecs")]
-    registry.register(Box::new(devkit_ext_ecs::EcsExtension));
-
-    #[cfg(feature = "pulumi")]
-    registry.register(Box::new(devkit_ext_pulumi::PulumiExtension));
-
-    #[cfg(feature = "ci")]
-    registry.register(Box::new(devkit_ext_ci::CiExtension));
-
-    #[cfg(feature = "commands")]
-    registry.register(Box::new(devkit_ext_commands::CommandsExtension));
-
+    // Interactive menu loop
     loop {
-        // Build menu dynamically - extensions auto-register their items!
-        let menu_items = registry.menu_items(ctx);
-        let mut display: Vec<String> = vec![];
+        // Get extension menu items (rich interactive commands)
+        let extension_items = extensions.menu_items(&ctx);
 
-        // Extension menu items (automatically populated based on availability)
-        for item in &menu_items {
-            display.push(item.label.clone());
+        // Discover all commands (auto-discovered)
+        let commands = engine.discover(&ctx);
+
+        // Group discovered commands by category
+        let mut grouped: HashMap<Category, Vec<&devkit_core::DiscoveredCommand>> = HashMap::new();
+        for cmd in commands {
+            grouped.entry(cmd.category).or_default().push(cmd);
         }
 
-        println!();
-        let choice = FuzzySelect::with_theme(&ctx.theme())
+        // Build combined menu
+        let mut menu_items: Vec<String> = Vec::new();
+        let mut command_map: Vec<&devkit_core::DiscoveredCommand> = Vec::new();
+        let mut extension_handler_map: Vec<&devkit_core::MenuItem> = Vec::new();
+
+        // Add extension menu items first (interactive commands)
+        if !extension_items.is_empty() {
+            for item in &extension_items {
+                menu_items.push(item.label.clone());
+                extension_handler_map.push(item);
+            }
+            menu_items.push("".to_string());
+        }
+
+        // Show recent commands
+        let recent = history.recent_commands();
+        if !recent.is_empty() {
+            menu_items.push("─── Recent ───".to_string());
+            for entry in recent.iter().take(5) {
+                // Find the command in discovered commands
+                if let Some(cmd) = commands.iter().find(|c| c.id == entry.id) {
+                    menu_items.push(format!("↻ {}", cmd.label));
+                    command_map.push(cmd);
+                }
+            }
+            menu_items.push("".to_string());
+        }
+
+        // Group commands by category
+        let category_order = [
+            Category::Dev,
+            Category::Build,
+            Category::Test,
+            Category::Quality,
+            Category::Services,
+            Category::Database,
+            Category::Deploy,
+            Category::Git,
+            Category::Dependencies,
+            Category::Scripts,
+            Category::Other,
+        ];
+
+        for category in &category_order {
+            if let Some(cmds) = grouped.get(category) {
+                if !cmds.is_empty() {
+                    // Category header
+                    menu_items.push(format!(
+                        "─── {} {} ({}) ───",
+                        category.emoji(),
+                        category.label(),
+                        cmds.len()
+                    ));
+
+                    // Add commands
+                    for cmd in cmds {
+                        menu_items.push(cmd.label.clone());
+                        command_map.push(cmd);
+                    }
+
+                    menu_items.push("".to_string());
+                }
+            }
+        }
+
+        // Add multi-select option at the end
+        if !extension_items.is_empty() || !command_map.is_empty() {
+            menu_items.push("".to_string());
+            menu_items.push("⚡ Run multiple commands...".to_string());
+        }
+
+        // Show menu
+        let selection = FuzzySelect::with_theme(&ctx.theme())
             .with_prompt("What would you like to do? (type to filter)")
-            .items(&display)
+            .items(&menu_items)
             .default(0)
-            .interact()?;
+            .interact_opt()?;
 
-        // Handle menu item selection
-        let result: Result<()> = if choice < menu_items.len() {
-            println!();
-            (menu_items[choice].handler)(ctx).map_err(Into::into)
-        } else {
-            Ok(())
-        };
+        // Handle selection
+        match selection {
+            Some(idx) => {
+                // Check if it's a separator or empty line
+                let selected_text = &menu_items[idx];
+                if selected_text.starts_with("───") || selected_text.is_empty() {
+                    continue;
+                }
 
-        if let Err(e) = result {
-            println!();
-            ctx.print_error(&format!("Error: {:#}", e));
-        }
-    }
-}
+                // Check if multi-select mode was chosen
+                if selected_text == "⚡ Run multiple commands..." {
+                    let ext_refs: Vec<&devkit_core::MenuItem> = extension_items.iter().collect();
+                    handle_multi_select(&ctx, &ext_refs, &command_map, &mut history)?;
+                    continue;
+                }
 
-fn cmd_update(ctx: &AppContext, force: bool) -> Result<()> {
-    ctx.print_header("Checking for updates");
+                // Calculate which item was selected (extension vs discovered command)
+                let mut item_idx = 0;
 
-    match devkit_core::update::check_for_updates(force) {
-        Ok(Some(info)) => {
-            println!();
-            ctx.print_warning(&format!(
-                "New version available: {} → {}",
-                info.current_version, info.latest_version
-            ));
-            println!();
-            println!("Download: {}", info.download_url);
-            println!();
-            println!("To update:");
-            println!(
-                "  curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash"
-            );
-            println!();
-        }
-        Ok(None) => {
-            ctx.print_success("✓ You're on the latest version!");
-        }
-        Err(e) => {
-            ctx.print_warning(&format!("Failed to check for updates: {}", e));
-            ctx.print_info(
-                "You can still check manually at: https://github.com/crcn/devkit/releases",
-            );
+                for (i, item) in menu_items.iter().enumerate() {
+                    if i == idx {
+                        if !item.starts_with("───") && !item.is_empty() {
+                            break;
+                        }
+                    }
+
+                    if !item.starts_with("───") && !item.is_empty() {
+                        if i < idx {
+                            item_idx += 1;
+                        }
+                    }
+                }
+
+                // Check if it's an extension item
+                if item_idx < extension_handler_map.len() {
+                    let item = extension_handler_map[item_idx];
+
+                    println!();
+                    println!("Running: {}", item.label);
+                    println!("─────────────────────────────────────────");
+                    println!();
+
+                    let result = (item.handler)(&ctx);
+
+                    println!();
+                    if let Err(e) = result {
+                        ctx.print_error(&format!("Error: {:#}", e));
+                    } else {
+                        ctx.print_success("✓ Command completed");
+                    }
+                    println!();
+                } else {
+                    // It's a discovered command
+                    let cmd_idx = item_idx - extension_handler_map.len();
+                    if cmd_idx < command_map.len() {
+                        let cmd = command_map[cmd_idx];
+
+                        println!();
+                        println!("Running: {}", cmd.label);
+                        println!("─────────────────────────────────────────");
+                        println!();
+
+                        let result = cmd.execute(&ctx);
+
+                        println!();
+                        if let Err(e) = result {
+                            ctx.print_error(&format!("Error: {:#}", e));
+                        } else {
+                            ctx.print_success("✓ Command completed");
+
+                            // Record in history
+                            history.record(&cmd.id, &cmd.label);
+                            let _ = history.save(&ctx.repo);
+                        }
+                        println!();
+                    }
+                }
+            }
+            None => {
+                // User pressed Ctrl+C
+                println!();
+                break;
+            }
         }
     }
 
     Ok(())
 }
 
-fn check_for_updates_background(ctx: &AppContext) {
-    use std::thread;
+fn handle_multi_select(
+    ctx: &AppContext,
+    extension_items: &[&devkit_core::MenuItem],
+    command_map: &[&devkit_core::DiscoveredCommand],
+    history: &mut CommandHistory,
+) -> Result<()> {
+    // Build selectable items list with indices
+    let mut items = Vec::new();
+    let mut item_indices = Vec::new(); // (type: 0=extension, 1=command, index)
 
-    let quiet = ctx.quiet;
-    thread::spawn(move || {
-        if let Ok(Some(info)) = devkit_core::update::check_for_updates(false) {
-            if !quiet {
-                eprintln!();
-                eprintln!(
-                    "💡 Update available: {} → {} (run 'devkit update' for details)",
-                    info.current_version, info.latest_version
-                );
-                eprintln!();
-            }
-        }
-    });
-}
-
-fn resolve_aliases(cli: &mut Cli, ctx: &AppContext) {
-    let aliases = &ctx.config.global.aliases.aliases;
-
-    if let Some(Commands::Cmd {
-        command: Some(cmd), ..
-    }) = &mut cli.command
-    {
-        if let Some(resolved) = aliases.get(cmd.as_str()) {
-            tracing::debug!("Resolved alias '{}' to '{}'", cmd, resolved);
-            *cmd = resolved.clone();
-        }
+    // Add extension items
+    for (i, item) in extension_items.iter().enumerate() {
+        items.push(item.label.clone());
+        item_indices.push((0, i));
     }
-}
 
-fn cmd_history(ctx: &AppContext, search: Option<&str>) -> Result<()> {
-    ctx.print_header("Command History");
-    println!();
+    // Add discovered commands
+    for (i, cmd) in command_map.iter().enumerate() {
+        items.push(cmd.label.clone());
+        item_indices.push((1, i));
+    }
 
-    let history = match search {
-        Some(pattern) => devkit_core::history::search_history(pattern)?,
-        None => devkit_core::history::load_history()?,
-    };
-
-    if history.is_empty() {
-        ctx.print_info("No command history found");
+    if items.is_empty() {
+        println!("No commands available for multi-select");
         return Ok(());
     }
 
-    for entry in history.iter().rev().take(20) {
-        let status = if entry.success { "✓" } else { "✗" };
-        let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0)
-            .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
-            .unwrap_or_else(|| "Unknown".to_string());
+    // Show multi-select dialog
+    let selections = MultiSelect::with_theme(&ColorfulTheme::default())
+        .with_prompt("Select commands to run (space to select, enter to confirm)")
+        .items(&items)
+        .interact()?;
 
-        println!("{} {} - {}", status, timestamp, entry.command);
+    if selections.is_empty() {
+        println!("No commands selected");
+        return Ok(());
     }
 
     println!();
-    ctx.print_info(&format!("Showing {} entries", history.len().min(20)));
+    println!("Running {} commands sequentially...", selections.len());
+    println!("─────────────────────────────────────────");
+    println!();
+
+    // Execute selected commands sequentially
+    let mut results: Vec<(String, Result<()>)> = Vec::new();
+
+    for &idx in &selections {
+        let (item_type, item_idx) = item_indices[idx];
+
+        match item_type {
+            0 => {
+                // Extension item
+                let ext_item = extension_items[item_idx];
+                println!("▶ Running: {}", ext_item.label);
+                println!();
+
+                let result = (ext_item.handler)(ctx);
+                // Convert to anyhow::Result
+                let anyhow_result: Result<()> = result.map_err(|e| anyhow::anyhow!("{:#}", e));
+                results.push((ext_item.label.clone(), anyhow_result));
+
+                println!();
+            }
+            1 => {
+                // Discovered command
+                let cmd = command_map[item_idx];
+                println!("▶ Running: {}", cmd.label);
+                println!();
+
+                let result = cmd.execute(ctx);
+
+                // Record in history if successful
+                let is_ok = result.is_ok();
+                if is_ok {
+                    history.record(&cmd.id, &cmd.label);
+                }
+
+                // Convert result to anyhow::Result for consistent error handling
+                let anyhow_result: Result<()> = result.map_err(|e| anyhow::anyhow!("{:#}", e));
+                results.push((cmd.label.clone(), anyhow_result));
+
+                println!();
+            }
+            _ => {}
+        }
+    }
+
+    // Show summary
+    println!("─────────────────────────────────────────");
+    println!("Summary:");
+    println!();
+
+    let mut success_count = 0;
+    let mut error_count = 0;
+
+    for (label, result) in &results {
+        match result {
+            Ok(_) => {
+                ctx.print_success(&format!("✓ {}", label));
+                success_count += 1;
+            }
+            Err(e) => {
+                ctx.print_error(&format!("✗ {}: {:#}", label, e));
+                error_count += 1;
+            }
+        }
+    }
+
+    println!();
+    println!("─────────────────────────────────────────");
+    println!(
+        "Completed: {} succeeded, {} failed",
+        success_count, error_count
+    );
+    println!();
+
+    // Save history
+    let _ = history.save(&ctx.repo);
 
     Ok(())
+}
+
+fn generate_completions(shell: Shell) {
+    let mut cmd = Cli::command();
+    let name = cmd.get_name().to_string();
+    generate(shell, &mut cmd, name, &mut io::stdout());
 }

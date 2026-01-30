@@ -1,46 +1,75 @@
 # devkit
 
-**A comprehensive development environment orchestration toolkit written in Rust.**
+**Universal command discovery and execution for any codebase.**
 
-> ✨ **Status**: Active development - Core features complete, extensions in progress
+> Run `devkit` in any repository and instantly see every available command - no configuration required.
+
+[![Release](https://img.shields.io/github/v/release/crcn/devkit)](https://github.com/crcn/devkit/releases)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
+
+---
+
+## 🎯 What is devkit?
+
+**The Problem:** You clone a repo. Now what? Where are the commands? How do you run tests? Build? Deploy?
+
+**The Solution:** `devkit` automatically discovers and surfaces **every available command** in any repository:
+
+- **📦 Package managers**: npm scripts, Cargo commands, package.json scripts
+- **🔨 Build tools**: Makefile targets, build scripts
+- **🐳 Services**: Docker Compose services and operations
+- **📝 Scripts**: Executable shell scripts in `bin/`, `scripts/`, etc.
+- **✨ And more**: Automatically organized by category with fuzzy search
+
+```bash
+$ devkit
+╭─────────────────────────────────────────╮
+│  🚀 devkit - Command Discovery          │
+╰─────────────────────────────────────────╯
+
+? What would you like to do? (type to filter) ›
+  🐳 Docker - Up
+  🐳 Docker - Logs
+  🐳 Docker - Shell
+
+  ─── 📦 Build (3) ───
+  📦 Build all packages
+  📦 Build (release)
+  📦 Build (watch mode)
+
+  ─── 🧪 Test (2) ───
+  🧪 Test all packages
+  🧪 Test (watch mode)
+
+  ─── ✨ Quality (4) ───
+  ✨ Lint all packages
+  ✨ Format all packages
+  ✨ Check all packages
+  ✨ Fix lint issues
+
+  ─── 📝 Scripts (5) ───
+  📝 deploy
+  📝 setup
+  📝 migrate
+```
+
+**Zero configuration. Works anywhere. See everything.**
 
 ---
 
 ## 🚀 Installation
 
-### Quick Install (Recommended)
-
-Install devkit binary + project setup (defaults to Kitchen Sink mode):
+### Quick Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash
 ```
 
-This installs the binary to `~/.local/bin` and sets up your project with Kitchen Sink mode.
+This installs the binary to `~/.local/bin/devkit`.
 
-### Interactive Install (Choose Mode)
+### Manual Install
 
-Download and run interactively to choose between Kitchen Sink or Custom CLI:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh -o install.sh
-chmod +x install.sh
-./install.sh
-```
-
-### Specify Mode Explicitly
-
-```bash
-# Kitchen Sink mode (recommended)
-DEVKIT_MODE=kitchen-sink curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash
-
-# Custom CLI mode (advanced)
-DEVKIT_MODE=custom curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash
-```
-
-### Binary Only
-
-Just want the CLI tool globally? Download and install:
+Download the latest release for your platform:
 
 ```bash
 # Detect platform and install
@@ -50,7 +79,8 @@ chmod +x devkit
 sudo mv devkit /usr/local/bin/
 ```
 
-Or manually for your platform:
+<details>
+<summary>Platform-specific downloads</summary>
 
 ```bash
 # Linux x86_64
@@ -69,13 +99,7 @@ curl -fsSL https://github.com/crcn/devkit/releases/latest/download/devkit-macos-
 chmod +x devkit && sudo mv devkit /usr/local/bin/
 ```
 
-<details>
-<summary>Windows Installation</summary>
-
-Download from [releases page](https://github.com/crcn/devkit/releases/latest):
-- `devkit-windows-x86_64.exe`
-
-Add to PATH or rename to `devkit.exe` and place in a directory in your PATH.
+Windows: Download `devkit-windows-x86_64.exe` from [releases](https://github.com/crcn/devkit/releases/latest)
 </details>
 
 ### Build from Source
@@ -89,313 +113,274 @@ cargo build --release -p devkit-cli
 
 ---
 
-## What is devkit?
+## ⚡ Quick Start
 
-`devkit` is a zero-friction CLI tool that unifies your development workflows. It provides a single interface for Docker, databases, testing, CI/CD, and custom project commands - all while automatically detecting what's available in your project.
-
-Born from the need to eliminate duplicated dev tooling across multiple projects, devkit extracts the 70% of dev-cli patterns that are identical across projects while letting you keep the 30% that's unique to each codebase.
-
-## Key Features
-
-### 🎯 Smart Feature Detection
-Commands automatically hide if features aren't detected:
-- No `docker-compose.yml`? No docker commands
-- No `[database]` sections? No database commands
-- No `.github/workflows`? No CI commands
-
-### 📦 Package Command System
-Define commands once in `dev.toml`, run anywhere:
-```toml
-[cmd.build]
-default = "cargo build"
-watch = "cargo watch -x build"
-deps = ["common:build"]  # Automatic dependency resolution
-
-[cmd.test]
-default = "cargo test"
-```
-
-Then run:
 ```bash
-./dev.sh cmd build --watch  # Automatic variant selection
-./dev.sh cmd test           # Respects dependencies
+# Run in any repository
+cd your-project
+devkit
+
+# Or run specific commands directly
+devkit docker up
+devkit test
+devkit build
 ```
 
-### ✨ Production-Ready Features
+That's it. No setup, no configuration files required.
 
-**Better Error Messages**
+---
+
+## 🎨 Key Features
+
+### 🔍 **Zero-Config Discovery**
+
+Devkit automatically finds commands by scanning:
+
+- **Cargo workspaces** → Build, test, clippy, fmt commands per package
+- **Node.js projects** → All npm/yarn/pnpm scripts from package.json
+- **Docker Compose** → Service operations (up, down, logs, shell, etc.)
+- **Makefiles** → All targets with descriptions
+- **Shell scripts** → Executable files in bin/, scripts/, tools/
+
+**No `.devkit.toml` required.** Just run it.
+
+### 🎯 **Smart Categorization**
+
+Commands are automatically grouped by purpose:
+- 📦 **Build** - Compilation, bundling
+- 🧪 **Test** - Test runners
+- ✨ **Quality** - Linting, formatting, type checking
+- 🐳 **Services** - Docker, databases
+- 🚀 **Deploy** - Deployment scripts
+- 📝 **Scripts** - Custom project scripts
+
+### 🔎 **Fuzzy Search**
+
+Type to filter commands in real-time:
 ```
-Error: Docker compose failed: Cannot connect to Docker daemon
-Try: Make sure Docker is running: docker info
+? What would you like to do? › docker
+  🐳 Docker - Up
+  🐳 Docker - Down
+  🐳 Docker - Logs
 ```
 
-**Early Validation**
+### 📊 **Command History**
+
+Recent commands appear at the top for quick re-runs:
 ```
-Configuration validation failed:
-  ✗ Circular dependency detected: api:build -> common:build -> api:build
-  ✗ Invalid dependency 'nonexistent:build' in api:test - dependency not found
+─── Recent ───
+↻ 🐳 Docker - Logs
+↻ 🧪 Test all packages
+↻ 📦 Build (watch mode)
 ```
 
-**Progress Indicators**
-```
-⠋ Starting containers...
-✓ Containers started
+### 🎭 **Rich Interactive Commands**
+
+Docker operations include:
+- **Multi-select containers** for logs
+- **Interactive service selection** for up/down/restart
+- **Shell access** with container picker
+- **Live log following** for multiple containers
+
+---
+
+## 🏗️ Architecture
+
+### Discovery Providers
+
+Auto-discover commands from various sources:
+
+```rust
+pub trait CommandProvider {
+    fn discover(&self, ctx: &AppContext) -> Result<Vec<DiscoveredCommand>>;
+}
 ```
 
-**Searchable Interactive Menu**
-```
-Run devkit without arguments to open an interactive menu.
-Type to filter options in real-time - perfect for finding commands quickly!
+**Built-in providers:**
+- `CargoProvider` - Rust workspace commands
+- `NpmProvider` - Node.js package scripts
+- `MakefileProvider` - Make targets
+- `ScriptProvider` - Executable scripts
+- More coming...
+
+### Extensions
+
+Rich interactive commands for complex workflows:
+
+```rust
+pub trait Extension {
+    fn is_available(&self, ctx: &AppContext) -> bool;
+    fn menu_items(&self) -> Vec<MenuItem>;
+}
 ```
 
-**Shell Completions**
-```bash
-devkit completions bash > /etc/bash_completion.d/devkit
-devkit completions zsh > /usr/local/share/zsh/site-functions/_devkit
-```
+**Built-in extensions:**
+- `DockerExtension` - Interactive container operations
 
-**Structured Logging**
-```bash
-RUST_LOG=devkit=debug ./dev.sh status
-```
-
-### 🔧 Extend or Use Standalone
-- **Library**: Import `devkit-core` and `devkit-tasks` for custom CLIs
-- **Standalone**: Use the default `devkit` binary
-- **Both**: Mix and match as needed
-
-## Architecture
+### Project Structure
 
 ```
 devkit/
 ├── crates/
-│   ├── devkit-core/       ✅ Config, context, detection, errors, validation
-│   ├── devkit-tasks/      ✅ Command discovery, execution, dependencies
-│   └── devkit-cli/        ✅ Kitchen sink CLI binary
+│   ├── devkit-core/       # Core abstractions, discovery system
+│   ├── devkit-tasks/      # Command execution engine
+│   └── devkit-cli/        # Main CLI binary
 │
 └── extensions/
-    ├── devkit-ext-docker/    ✅ Docker compose operations
-    ├── devkit-ext-deps/      ✅ Dependency detection & installation
-    ├── devkit-ext-database/  ✅ Database migrations & seeds
-    ├── devkit-ext-quality/   ✅ Format, lint, test
-    ├── devkit-ext-git/       ✅ Git workflows & releases
-    ├── devkit-ext-ci/        ✅ CI integration (GitHub Actions)
-    ├── devkit-ext-env/       ✅ Environment management
-    ├── devkit-ext-tunnel/    ✅ Tunneling services (ngrok/cloudflared)
-    ├── devkit-ext-test/      ✅ Test orchestration & coverage
-    ├── devkit-ext-benchmark/ ✅ Benchmarking (Rust/Node)
-    ├── devkit-ext-ecs/       ✅ ECS deployment (AWS)
-    └── devkit-ext-pulumi/    ✅ Pulumi infrastructure
+    └── devkit-ext-docker/ # Docker Compose operations
 ```
 
-### devkit-core
-Core abstractions for all devkit tools:
-- **Config system**: Discovers packages, loads `.dev/config.toml` and `dev.toml`
-- **Feature detection**: Auto-detect Docker, Git, databases, CI, mobile, etc.
-- **Error handling**: Structured errors with helpful suggestions
-- **Validation**: Early detection of circular dependencies, invalid configs
-- **AppContext**: Shared state, theming, quiet mode
-- **Utilities**: Repo root detection, command checks, browser opening
+---
 
-### devkit-tasks
-Task discovery and execution engine:
-- **Command discovery**: Find commands in package `dev.toml` files
-- **Dependency resolution**: Topological sort with circular dependency detection
-- **Parallel execution**: Run independent commands concurrently
-- **Variant support**: `build:watch`, `lint:fix`, etc.
+## 📚 How It Works
 
-### devkit-cli
-Kitchen sink CLI with all features:
-- Interactive menu system
-- Docker operations (up, down, restart, logs, shell)
-- Database management (migrate, seed, reset, shell)
-- Code quality tools (fmt, lint, test)
-- Dependency management (auto-install)
-- Shell completions (bash, zsh, fish, powershell)
-- Structured logging with tracing
+1. **Scan**: Devkit scans your repository for commands
+   - Checks for Cargo.toml, package.json, Makefile, docker-compose.yml
+   - Finds executable scripts in common directories
+   - Parses package manager configs
 
-### Extensions
-Modular functionality you can include:
-- **docker**: Docker Compose operations with progress indicators
-- **deps**: Smart dependency detection and installation
-- **database**: Database migrations, seeds, and shell access
-- **quality**: Format, lint, and test orchestration
-- More coming soon...
+2. **Categorize**: Commands are automatically organized
+   - By purpose (build, test, quality, etc.)
+   - With emoji indicators
+   - Grouped by source
 
-## GitHub Actions
+3. **Present**: Interactive fuzzy-searchable menu
+   - Type to filter instantly
+   - Recent commands at top
+   - Clear descriptions
 
-### Setup Action
+4. **Execute**: Run commands with proper context
+   - Correct working directory
+   - Proper shell environment
+   - Live output streaming
 
-Use devkit in your GitHub Actions workflows with the `setup-devkit` action:
+---
 
-```yaml
-- name: Setup devkit
-  uses: crcn/devkit/.github/actions/setup-devkit@main
-  with:
-    version: latest  # or specific version like 'v0.1.0-abc1234'
+## 🎓 Examples
 
-- name: Run devkit commands
-  run: |
-    devkit doctor
-    devkit status
-    devkit cmd test
-```
-
-### Example Workflow
-
-```yaml
-name: CI
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup devkit
-        uses: crcn/devkit/.github/actions/setup-devkit@main
-
-      - name: Run tests
-        run: devkit cmd test
-
-      - name: Check quality
-        run: |
-          devkit fmt --check
-          devkit lint
-```
-
-### Available Inputs
-
-- **version**: Version to install (default: `latest`)
-  - Use `latest` for the most recent release
-  - Use specific tags like `v0.1.0-abc1234`
-- **github-token**: GitHub token for API access (default: `${{ github.token }}`)
-
-### Outputs
-
-- **version**: The installed version of devkit
-- **cache-hit**: Whether the binary was restored from cache
-
-## Quick Start
-
-### 🚀 Install from Source
+### Basic Discovery
 
 ```bash
-# Clone and build
-git clone https://github.com/crcn/devkit
-cd devkit
-cargo build --release
+# See all commands
+devkit
 
-# Binary at target/release/devkit
+# In a Rust workspace
+📦 Build all packages
+📦 Build (release)
+🧪 Test all packages
+✨ Lint all packages
+✨ Format all packages
+✨ Check all packages
+
+# In a Node.js project
+📦 build
+🧪 test
+🧪 test:watch
+✨ lint
+✨ lint:fix
+✨ format
+🔥 dev
 ```
 
-### Run Commands
+### Docker Operations
+
 ```bash
-devkit                    # Interactive menu (type to search/filter options)
-devkit start             # Start development environment
-devkit docker up         # Start Docker containers
-devkit cmd build         # Run package build commands
-devkit cmd test          # Run package tests
-devkit doctor            # Check system health
-devkit completions bash  # Generate shell completions
+# Interactive Docker menu
+devkit
+
+# Select from:
+🐳 Docker - Up          # Start services (multi-select)
+🐳 Docker - Down        # Stop all services
+🐳 Docker - Restart     # Restart services (multi-select)
+🐳 Docker - Logs        # Follow logs (multi-select containers)
+🐳 Docker - Shell       # Shell into container (select one)
+🐳 Docker - Build       # Build images (multi-select)
 ```
 
-### Enable Debug Logging
+### Workspace Commands
+
 ```bash
-RUST_LOG=devkit=debug devkit status
-RUST_LOG=devkit=trace devkit cmd build
+# Rust workspace
+devkit  # Shows commands for each package
+
+📦 Build devkit-core
+📦 Build devkit-cli
+📦 Build devkit-tasks
+🧪 Test devkit-core
+🧪 Test devkit-cli
+
+# Node workspace (pnpm/yarn/npm)
+📦 build (packages/api)
+📦 build (packages/web)
+🧪 test (packages/api)
 ```
 
-## Configuration
+---
 
-### Global Config (`.dev/config.toml`)
+## 🔧 Use as a Library
 
-```toml
-[project]
-name = "my-project"
+### Basic Command Discovery
 
-[workspaces]
-packages = ["packages/*", "apps/*"]
-exclude = ["packages/legacy"]
-
-[environments]
-available = ["dev", "staging", "prod"]
-default = "dev"
-
-[services]
-api = 8080
-postgres = 5432
-
-[urls.playground]
-label = "GraphQL Playground"
-url = "http://localhost:8080/playground"
-```
-
-### Package Config (`packages/*/dev.toml`)
-
-```toml
-# Database migrations
-[database]
-migrations = "migrations"
-seeds = "seeds/dev.sql"
-
-# Commands with variants and dependencies
-[cmd]
-test = "cargo test"
-
-[cmd.build]
-default = "cargo build"
-release = "cargo build --release"
-watch = "cargo watch -x build"
-deps = ["common:build", "utils:build"]
-
-[cmd.lint]
-default = "cargo clippy"
-fix = "cargo clippy --fix"
-```
-
-## Use as a Library
-
-### Basic Usage
 ```rust
-use devkit_core::{AppContext, Result};
-use devkit_tasks::{run_cmd, CmdOptions};
+use devkit_core::{AppContext, discovery::*};
 
-fn main() -> Result<()> {
-    // Create context (loads config, validates, detects features)
+fn main() -> anyhow::Result<()> {
     let ctx = AppContext::new(false)?;
 
-    // Feature detection
-    if ctx.features.docker {
-        println!("Docker available!");
-    }
+    // Setup discovery engine
+    let mut engine = DiscoveryEngine::new();
+    engine.register(Box::new(CargoProvider::new()));
+    engine.register(Box::new(NpmProvider::new()));
 
-    // Run package commands
-    let opts = CmdOptions::default();
-    let results = run_cmd(&ctx, "test", &opts)?;
+    // Discover all commands
+    let commands = engine.discover(&ctx);
+
+    for cmd in commands {
+        println!("{}: {}", cmd.label, cmd.description);
+    }
 
     Ok(())
 }
 ```
 
-### Error Handling
-```rust
-use devkit_core::{DevkitError, Result};
+### Create Custom Provider
 
-fn example() -> Result<()> {
-    // Errors include helpful context
-    Err(DevkitError::feature_not_available(
-        "docker".to_string(),
-        "Install from https://docker.com".to_string(),
-    ))
+```rust
+use devkit_core::discovery::*;
+
+pub struct MyProvider;
+
+impl CommandProvider for MyProvider {
+    fn name(&self) -> &'static str {
+        "my-provider"
+    }
+
+    fn is_available(&self, ctx: &AppContext) -> bool {
+        // Check if provider should run
+        ctx.repo.join("my-config.toml").exists()
+    }
+
+    fn discover(&self, ctx: &AppContext) -> Result<Vec<DiscoveredCommand>> {
+        let mut commands = Vec::new();
+
+        commands.push(
+            DiscoveredCommand::new("my.cmd", "🚀 My Command", Category::Scripts)
+                .description("Does something cool")
+                .handler(|ctx| {
+                    println!("Running my command!");
+                    Ok(())
+                })
+        );
+
+        Ok(commands)
+    }
 }
 ```
 
-### Custom Extension
+### Create Custom Extension
+
 ```rust
-use devkit_core::{AppContext, Extension, MenuItem, Result};
+use devkit_core::{Extension, MenuItem};
 
 pub struct MyExtension;
 
@@ -405,15 +390,15 @@ impl Extension for MyExtension {
     }
 
     fn is_available(&self, ctx: &AppContext) -> bool {
-        // Check if this extension should be enabled
-        ctx.features.docker
+        // Enable when conditions are met
+        true
     }
 
     fn menu_items(&self) -> Vec<MenuItem> {
         vec![MenuItem {
-            label: "🚀 My Command".to_string(),
+            label: "🎨 My Interactive Command".to_string(),
             handler: Box::new(|ctx| {
-                println!("Running my command!");
+                // Rich interactive workflow here
                 Ok(())
             }),
         }]
@@ -421,138 +406,113 @@ impl Extension for MyExtension {
 }
 ```
 
-## Development Roadmap
+---
 
-### Core (Complete ✅)
-- [x] Config system with validation
-- [x] Feature detection
-- [x] Task execution engine
-- [x] Dependency resolution with cycle detection
-- [x] Error handling with structured errors
-- [x] Extension system
-- [x] Progress indicators
-- [x] Shell completions
-- [x] Structured logging
-- [x] Test suite (20+ tests)
+## 🎯 Design Philosophy
 
-### Extensions (Complete ✅)
-- [x] Docker operations
-- [x] Dependency management
-- [x] Database operations
-- [x] Code quality tools
-- [x] Git workflows & releases
-- [x] CI integration (GitHub Actions)
-- [x] Environment management
-- [x] Tunnel services (ngrok/cloudflared)
-- [x] Test orchestration & coverage
-- [x] Benchmarking (Rust/Node)
-- [x] ECS deployment (AWS)
-- [x] Pulumi infrastructure
+### Discovery Over Configuration
 
-### Future
-- [ ] Init command for new projects
-- [ ] Publish to crates.io
-- [ ] Additional language support (Python, Go, TypeScript)
-- [ ] Plugin marketplace
-
-Current progress: **~95%** (core complete, all extensions implemented)
-
-## Testing
-
-```bash
-# Run all tests
-cargo test --workspace
-
-# Run with output
-cargo test --workspace -- --nocapture
-
-# Run specific test
-cargo test --package devkit-core --test validation_tests
+**Bad:** Require users to configure everything
+```toml
+# .devkit.toml
+[commands]
+build = "cargo build"
+test = "cargo test"
+# ... 50 more lines
 ```
 
-Test coverage:
-- Configuration loading and parsing
-- Error message formatting
-- Circular dependency detection
-- Command validation
-- Utility functions
-- Invalid config handling
-
-## Why devkit?
-
-**Problem**: Multiple projects with similar dev workflows, lots of duplicated code.
-
-**Solution**: Extract the 70% that's identical into `devkit`, keep the 30% that's unique.
-
-**Result**:
-- ✅ Shared infrastructure across all projects
-- ✅ Project-specific extensions stay in project
-- ✅ Each project pins the devkit version that works for them
-- ✅ No coordination overhead
-- ✅ Production-ready error handling
-- ✅ Validated configurations catch issues early
-- ✅ Visual feedback for all operations
-- ✅ Comprehensive test coverage
-
-## Examples
-
-### Basic Workflow
+**Good:** Discover automatically
 ```bash
-# Check system
-devkit doctor
-
-# Start everything
-devkit start
-
-# Run tests across all packages
-devkit cmd test
-
-# Format and lint
-devkit fmt
-devkit lint --fix
-
-# Docker operations
-devkit docker up
-devkit docker logs
-devkit docker shell
+$ devkit  # Just works, no config needed
 ```
 
-### Advanced Usage
-```bash
-# Run command with variant
-devkit cmd build:watch
+### Organized by Intent
 
-# Run for specific package
-devkit cmd test -p api
+Commands are grouped by **what they do**, not **where they come from**:
+- Build commands together (Cargo, npm, Make)
+- Test commands together
+- Quality tools together
 
-# Parallel execution
-devkit cmd test --parallel
+### Fast and Responsive
 
-# With debug logging
-RUST_LOG=devkit=debug devkit cmd build
+- Instant fuzzy search filtering
+- Cached discovery results
+- Minimal startup time
+- No heavy dependencies
 
-# Generate completions
-devkit completions zsh > ~/.zshrc.d/devkit
-```
+---
 
-## Documentation
+## 🚦 Status
 
-- [GITHUB_ACTIONS.md](GITHUB_ACTIONS.md) - Using devkit in CI/CD workflows
-- [ARCHITECTURE.md](ARCHITECTURE.md) - System design and flow
-- [IMPROVEMENTS_SUMMARY.md](IMPROVEMENTS_SUMMARY.md) - Recent improvements
-- [DOGFOODING.md](DOGFOODING.md) - Using devkit to build devkit
-- [examples/](examples/) - Example custom CLIs
+**Current:** Active development, core features complete
 
-## License
+**Supported:**
+- ✅ Cargo workspaces
+- ✅ Node.js projects (npm/yarn/pnpm)
+- ✅ Docker Compose
+- ✅ Makefiles
+- ✅ Shell scripts
+- ✅ Command history
+- ✅ Fuzzy search
+- ✅ Interactive Docker operations
+
+**Roadmap:**
+- [ ] Python projects (Poetry, setup.py)
+- [ ] Go modules
+- [ ] Justfiles
+- [ ] Task runners (Taskfile.yml)
+- [ ] VS Code tasks.json
+- [ ] Git hooks
+- [ ] Multi-select command execution
+
+---
+
+## 📖 Documentation
+
+- **Architecture**: How discovery and extensions work
+- **Creating Providers**: Build custom command providers
+- **Creating Extensions**: Build rich interactive commands
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Focus areas:
+- New command providers (Python, Go, etc.)
+- Improved command categorization
+- Better shell script parsing
+- Performance improvements
+
+---
+
+## 📄 License
 
 MIT OR Apache-2.0
 
-## Contributing
+---
 
-Contributions welcome! This project follows pragmatic, non-over-engineered design principles:
-- Real user value over speculative features
-- Simple solutions over complex abstractions
-- Tests for actual functionality
-- Clear error messages with suggestions
+## 💡 Why devkit?
 
-See issues for areas where help is needed.
+**The core insight:** Every project has commands. Finding them shouldn't require reading docs.
+
+**Before devkit:**
+```bash
+$ cd new-project
+$ cat README.md  # Scroll... scroll...
+$ cat package.json  # Find scripts...
+$ cat Makefile  # Find targets...
+$ ls bin/  # Find scripts...
+```
+
+**With devkit:**
+```bash
+$ cd new-project
+$ devkit
+# See everything, organized, searchable
+```
+
+**Result:** Zero onboarding friction. Instant productivity.
+
+---
+
+**Made with ❤️ in Rust**

@@ -1,11 +1,12 @@
 //! Core types and utilities for devkit
 
+pub mod command;
 pub mod config;
 pub mod context;
 pub mod detection;
+pub mod discovery;
 pub mod error;
 pub mod extension;
-pub mod history;
 pub mod init;
 pub mod output;
 pub mod update;
@@ -15,6 +16,7 @@ pub mod validation;
 pub use config::{CmdEntry, Config};
 pub use context::AppContext;
 pub use detection::Features;
+pub use discovery::{Category, CommandProvider, CommandScope, DiscoveredCommand, DiscoveryEngine};
 pub use error::{DevkitError, Result};
 pub use extension::{Extension, ExtensionRegistry, MenuItem};
 pub use utils::{cmd_exists, docker_available};

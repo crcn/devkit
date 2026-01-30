@@ -2,7 +2,7 @@
 
 use anyhow::{anyhow, Result};
 use console::style;
-use devkit_core::{utils::cmd_exists, AppContext};
+use devkit_core::{AppContext, utils::cmd_exists};
 use devkit_tasks::CmdBuilder;
 
 /// Check if a container is running

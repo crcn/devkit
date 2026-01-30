@@ -1,10 +1,7 @@
 //! Docker Compose operations
 
 use anyhow::{anyhow, Result};
-use devkit_core::{
-    utils::{docker_compose_program, ensure_docker},
-    AppContext,
-};
+use devkit_core::{AppContext, utils::{docker_compose_program, ensure_docker}};
 use devkit_tasks::CmdBuilder;
 use std::cell::RefCell;
 

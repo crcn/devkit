@@ -23,7 +23,7 @@ impl Extension for DockerExtension {
         ctx.features.docker
     }
 
-    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
+    fn menu_items(&self) -> Vec<MenuItem> {
         vec![
             MenuItem {
                 label: "🐳 Docker - Up".to_string(),
@@ -118,7 +118,11 @@ fn select_container_single(ctx: &AppContext, prompt: &str) -> Result<String> {
 }
 
 /// Select services (not containers) for operations that work with service names
-fn select_services_multi(ctx: &AppContext, prompt: &str, include_all: bool) -> Result<Vec<String>> {
+fn select_services_multi(
+    ctx: &AppContext,
+    prompt: &str,
+    include_all: bool,
+) -> Result<Vec<String>> {
     let services = list_services(ctx)?;
 
     if services.is_empty() {
@@ -190,67 +194,22 @@ fn docker_build_interactive(ctx: &AppContext) -> Result<()> {
     compose_build(ctx, &services, false, false)
 }
 
-/// Interactive handler for docker logs with live following (supports multiple containers)
+/// Interactive handler for docker logs with live following
 fn docker_logs_interactive(ctx: &AppContext) -> Result<()> {
-    use devkit_core::utils::docker_compose_program;
-    use devkit_tasks::CmdBuilder;
+    let container_id = select_container_single(
+        ctx,
+        "Select container to follow logs",
+    )?;
 
-    // Get all running services
-    let services = list_services(ctx)?;
-
-    if services.is_empty() {
-        return Err(anyhow!("No services found in docker-compose.yml"));
-    }
-
-    // Multi-select services to follow
-    let mut items = vec!["[All]".to_string()];
-    items.extend(services.clone());
-
-    let selection = MultiSelect::with_theme(&ColorfulTheme::default())
-        .with_prompt("Select containers to follow logs (space to select, enter to confirm)")
-        .items(&items)
-        .interact()?;
-
-    if selection.is_empty() {
-        return Err(anyhow!("No containers selected"));
-    }
-
-    // Determine which services to follow
-    let selected_services: Vec<String> = if selection.contains(&0) {
-        // [All] was selected
-        services
-    } else {
-        // Map selected indices to service names (offset by 1 for [All])
-        selection.iter().map(|&i| services[i - 1].clone()).collect()
-    };
-
-    // Follow logs using docker compose logs
-    let (prog, mut args) = docker_compose_program()?;
-    args.extend(["logs", "-f", "--tail", "200"].map(String::from));
-    args.extend(selected_services.clone());
-
-    ctx.print_header(&format!(
-        "Following logs for: {}",
-        selected_services.join(", ")
-    ));
-    println!();
-
-    let code = CmdBuilder::new(&prog)
-        .args(&args)
-        .cwd(&ctx.repo)
-        .inherit_io()
-        .run()?;
-
-    if code != 0 {
-        return Err(anyhow!("docker compose logs exited with code {}", code));
-    }
-
-    Ok(())
+    follow_logs(ctx, &container_id)
 }
 
 /// Interactive handler for docker shell
 fn docker_shell_interactive(ctx: &AppContext) -> Result<()> {
-    let container_id = select_container_single(ctx, "Select container to open shell")?;
+    let container_id = select_container_single(
+        ctx,
+        "Select container to open shell",
+    )?;
 
     open_shell(ctx, &container_id)
 }
