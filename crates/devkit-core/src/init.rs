@@ -1,6 +1,5 @@
 //! Project initialization and setup wizard
 
-use crate::detection;
 use anyhow::{Context, Result};
 use dialoguer::{Confirm, Input, MultiSelect};
 use glob;
