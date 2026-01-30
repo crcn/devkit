@@ -469,9 +469,15 @@ Commands are grouped by **what they do**, not **where they come from**:
 
 ## 📖 Documentation
 
-- **Architecture**: How discovery and extensions work
-- **Creating Providers**: Build custom command providers
-- **Creating Extensions**: Build rich interactive commands
+Full documentation is available in the [docs/](docs/) directory:
+
+- **[Architecture](docs/ARCHITECTURE.md)** - System design and internals
+- **[Quick Start](docs/QUICKSTART.md)** - Get started in 5 minutes
+- **[GitHub Actions](docs/GITHUB_ACTIONS.md)** - CI/CD integration
+- **[Roadmap](docs/ROADMAP.md)** - Future plans
+- **[Changelog](docs/CHANGELOG.md)** - Version history
+
+See [docs/README.md](docs/README.md) for the complete documentation index.
 
 ---
 
