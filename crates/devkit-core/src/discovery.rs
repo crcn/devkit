@@ -11,7 +11,6 @@ pub mod npm_provider;
 pub mod script_provider;
 
 use anyhow::Result;
-use std::collections::HashMap;
 
 use crate::context::AppContext;
 

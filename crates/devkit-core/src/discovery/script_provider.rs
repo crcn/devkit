@@ -4,8 +4,10 @@
 
 use anyhow::Result;
 use std::fs;
-use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
+
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 
 use crate::context::AppContext;
 use crate::discovery::{Category, CommandProvider, CommandScope, DiscoveredCommand};
@@ -24,12 +26,29 @@ impl ScriptProvider {
 
     /// Check if a file is executable
     fn is_executable(path: &Path) -> bool {
-        if let Ok(metadata) = fs::metadata(path) {
-            let permissions = metadata.permissions();
-            // Check if any execute bit is set (owner, group, or other)
-            permissions.mode() & 0o111 != 0
-        } else {
+        #[cfg(unix)]
+        {
+            // On Unix, check permission bits
+            if let Ok(metadata) = fs::metadata(path) {
+                let permissions = metadata.permissions();
+                // Check if any execute bit is set (owner, group, or other)
+                return permissions.mode() & 0o111 != 0;
+            }
             false
+        }
+
+        #[cfg(windows)]
+        {
+            // On Windows, check file extension
+            if let Some(ext) = path.extension() {
+                let ext = ext.to_string_lossy().to_lowercase();
+                matches!(
+                    ext.as_str(),
+                    "exe" | "bat" | "cmd" | "ps1" | "sh" | "bash"
+                )
+            } else {
+                false
+            }
         }
     }
 
