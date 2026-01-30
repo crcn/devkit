@@ -29,6 +29,12 @@ impl MakefileProvider {
                 continue;
             }
 
+            // Skip recipe lines (indented lines - these are commands, not targets)
+            // Recipe lines start with whitespace (tab or spaces)
+            if !line.is_empty() && (line.starts_with('\t') || line.starts_with(' ')) {
+                continue;
+            }
+
             // Capture comments
             if trimmed.starts_with('#') {
                 let comment = trimmed.trim_start_matches('#').trim();
