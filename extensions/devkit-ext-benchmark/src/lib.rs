@@ -17,15 +17,13 @@ impl Extension for BenchmarkExtension {
         ctx.features.cargo || ctx.features.node
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
-        vec![
-            MenuItem {
-                label: "⚡ Benchmark - Run All".to_string(),
-                handler: Box::new(|ctx| {
-                    run_benchmarks(ctx, &BenchmarkOptions::default()).map_err(Into::into)
-                }),
-            },
-        ]
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
+        vec![MenuItem {
+            label: "⚡ Benchmark - Run All".to_string(),
+            handler: Box::new(|ctx| {
+                run_benchmarks(ctx, &BenchmarkOptions::default()).map_err(Into::into)
+            }),
+        }]
     }
 }
 

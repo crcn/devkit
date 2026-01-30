@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use devkit_core::{AppContext, Extension, MenuItem};
-use devkit_tasks::{run_cmd, print_results, CmdOptions};
+use devkit_tasks::{print_results, run_cmd, CmdOptions};
 
 pub struct QualityExtension;
 
@@ -12,10 +12,13 @@ impl Extension for QualityExtension {
     }
 
     fn is_available(&self, ctx: &AppContext) -> bool {
-        ctx.features.commands
+        // DEPRECATED: This extension is redundant now that the commands extension
+        // surfaces [cmd.fmt], [cmd.lint], [cmd.test] directly in the menu.
+        // Only show if explicitly enabled in config: quality = true
+        ctx.config.global.features.quality
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         use devkit_core::DevkitError;
         vec![
             MenuItem {
@@ -47,11 +50,7 @@ impl Extension for QualityExtension {
 }
 
 pub fn fmt(ctx: &AppContext, fix: bool) -> Result<()> {
-    let variant = if fix {
-        Some("fix".to_string())
-    } else {
-        None
-    };
+    let variant = if fix { Some("fix".to_string()) } else { None };
 
     let opts = CmdOptions {
         parallel: false,
@@ -72,11 +71,7 @@ pub fn fmt(ctx: &AppContext, fix: bool) -> Result<()> {
 }
 
 pub fn lint(ctx: &AppContext, fix: bool) -> Result<()> {
-    let variant = if fix {
-        Some("fix".to_string())
-    } else {
-        None
-    };
+    let variant = if fix { Some("fix".to_string()) } else { None };
 
     let opts = CmdOptions {
         parallel: false,

@@ -37,6 +37,7 @@ pub struct GlobalConfig {
     pub urls: UrlsConfig,
     pub defaults: DefaultsConfig,
     pub features: FeaturesConfig,
+    pub aliases: AliasesConfig,
 }
 
 #[derive(Debug, Deserialize)]
@@ -229,6 +230,15 @@ impl Default for FeaturesConfig {
             monitoring: false,
         }
     }
+}
+
+/// Command aliases configuration
+#[derive(Debug, Deserialize, Default)]
+#[serde(default)]
+pub struct AliasesConfig {
+    /// Command aliases (e.g., "t" -> "test", "b" -> "build")
+    #[serde(flatten)]
+    pub aliases: HashMap<String, String>,
 }
 
 // =============================================================================
@@ -469,8 +479,7 @@ impl Config {
         let content = std::fs::read_to_string(&config_path)
             .map_err(|e| DevkitError::config_load(config_path.clone(), e.into()))?;
 
-        toml::from_str(&content)
-            .map_err(|e| DevkitError::config_parse(config_path, e))
+        toml::from_str(&content).map_err(|e| DevkitError::config_parse(config_path, e))
     }
 
     /// Discover packages and load their configurations
@@ -484,11 +493,10 @@ impl Config {
             let full_pattern = repo_root.join(pattern);
             let pattern_str = full_pattern.to_string_lossy();
 
-            let entries = glob::glob(&pattern_str)
-                .map_err(|e| DevkitError::InvalidGlob {
-                    pattern: pattern.clone(),
-                    source: e,
-                })?;
+            let entries = glob::glob(&pattern_str).map_err(|e| DevkitError::InvalidGlob {
+                pattern: pattern.clone(),
+                source: e,
+            })?;
 
             for entry in entries {
                 let path = entry?;
@@ -522,8 +530,7 @@ impl Config {
         let toml_config: PackageToml = if config_path.exists() {
             let content = fs::read_to_string(&config_path)
                 .map_err(|e| DevkitError::config_load(config_path.clone(), e.into()))?;
-            toml::from_str(&content)
-                .map_err(|e| DevkitError::config_parse(config_path, e))?
+            toml::from_str(&content).map_err(|e| DevkitError::config_parse(config_path, e))?
         } else {
             PackageToml::default()
         };

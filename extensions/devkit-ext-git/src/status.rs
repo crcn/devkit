@@ -33,13 +33,7 @@ pub fn git_status(ctx: &AppContext) -> Result<()> {
     // Recent commits
     println!("{}", style("Recent commits:").bold());
     CmdBuilder::new("git")
-        .args([
-            "log",
-            "--oneline",
-            "--no-decorate",
-            "-n",
-            "5",
-        ])
+        .args(["log", "--oneline", "--no-decorate", "-n", "5"])
         .cwd(&ctx.repo)
         .run()?;
 
@@ -79,7 +73,11 @@ pub fn git_status(ctx: &AppContext) -> Result<()> {
                 println!("  {} Ahead by {} commit(s)", style("↑").cyan(), ahead_count);
             }
             if behind_count > 0 {
-                println!("  {} Behind by {} commit(s)", style("↓").yellow(), behind_count);
+                println!(
+                    "  {} Behind by {} commit(s)",
+                    style("↓").yellow(),
+                    behind_count
+                );
             }
         }
     } else {

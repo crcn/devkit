@@ -47,8 +47,10 @@ impl AppContext {
         }
 
         let features = Features::detect(&repo, &config);
-        info!("Detected features: docker={}, git={}, cargo={}, node={}",
-              features.docker, features.git, features.cargo, features.node);
+        info!(
+            "Detected features: docker={}, git={}, cargo={}, node={}",
+            features.docker, features.git, features.cargo, features.node
+        );
 
         Ok(Self {
             repo,

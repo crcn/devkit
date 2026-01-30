@@ -21,25 +21,19 @@ impl Extension for CiExtension {
         ctx.features.git && devkit_core::cmd_exists("gh")
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![
             MenuItem {
                 label: "🔄 CI - Status".to_string(),
-                handler: Box::new(|ctx| {
-                    ci_status(ctx, None).map_err(Into::into)
-                }),
+                handler: Box::new(|ctx| ci_status(ctx, None).map_err(Into::into)),
             },
             MenuItem {
                 label: "🔄 CI - Watch Latest".to_string(),
-                handler: Box::new(|ctx| {
-                    ci_watch(ctx, None).map_err(Into::into)
-                }),
+                handler: Box::new(|ctx| ci_watch(ctx, None).map_err(Into::into)),
             },
             MenuItem {
                 label: "📋 CI - List Runs".to_string(),
-                handler: Box::new(|ctx| {
-                    ci_runs(ctx, 10, None).map_err(Into::into)
-                }),
+                handler: Box::new(|ctx| ci_runs(ctx, 10, None).map_err(Into::into)),
             },
         ]
     }

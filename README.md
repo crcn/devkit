@@ -222,6 +222,62 @@ Modular functionality you can include:
 - **quality**: Format, lint, and test orchestration
 - More coming soon...
 
+## GitHub Actions
+
+### Setup Action
+
+Use devkit in your GitHub Actions workflows with the `setup-devkit` action:
+
+```yaml
+- name: Setup devkit
+  uses: crcn/devkit/.github/actions/setup-devkit@main
+  with:
+    version: latest  # or specific version like 'v0.1.0-abc1234'
+
+- name: Run devkit commands
+  run: |
+    devkit doctor
+    devkit status
+    devkit cmd test
+```
+
+### Example Workflow
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup devkit
+        uses: crcn/devkit/.github/actions/setup-devkit@main
+
+      - name: Run tests
+        run: devkit cmd test
+
+      - name: Check quality
+        run: |
+          devkit fmt --check
+          devkit lint
+```
+
+### Available Inputs
+
+- **version**: Version to install (default: `latest`)
+  - Use `latest` for the most recent release
+  - Use specific tags like `v0.1.0-abc1234`
+- **github-token**: GitHub token for API access (default: `${{ github.token }}`)
+
+### Outputs
+
+- **version**: The installed version of devkit
+- **cache-hit**: Whether the binary was restored from cache
+
 ## Quick Start
 
 ### 🚀 Install from Source
@@ -481,6 +537,7 @@ devkit completions zsh > ~/.zshrc.d/devkit
 
 ## Documentation
 
+- [GITHUB_ACTIONS.md](GITHUB_ACTIONS.md) - Using devkit in CI/CD workflows
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System design and flow
 - [IMPROVEMENTS_SUMMARY.md](IMPROVEMENTS_SUMMARY.md) - Recent improvements
 - [DOGFOODING.md](DOGFOODING.md) - Using devkit to build devkit

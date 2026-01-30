@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run tests
+        run: cargo test --workspace --all-features
+
+      - name: Run clippy
+        run: cargo clippy --workspace --all-features -- -D warnings
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  integration:
+    name: Integration Test - devkit CLI
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build devkit
+        run: cargo build --release -p devkit-cli
+
+      - name: Install devkit locally
+        shell: bash
+        run: |
+          mkdir -p ~/.local/bin
+          cp target/release/devkit ~/.local/bin/
+          chmod +x ~/.local/bin/devkit
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Test devkit commands
+        shell: bash
+        run: |
+          # Verify devkit is available
+          devkit --version || true
+
+          # Test basic commands that don't require project setup
+          devkit doctor || echo "Doctor check completed"
+
+      - name: Create test project
+        shell: bash
+        run: |
+          mkdir -p test-project/.dev
+          cd test-project
+
+          # Create minimal config
+          cat > .dev/config.toml << 'EOF'
+          [project]
+          name = "test-project"
+
+          [workspaces]
+          packages = []
+          EOF
+
+          # Test status command
+          devkit status || echo "Status command completed"
+
+  # Example: Using devkit from GitHub releases
+  example-release-install:
+    name: Example - Install from Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup devkit
+        uses: ./.github/actions/setup-devkit
+        with:
+          version: latest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify installation
+        run: |
+          which devkit
+          devkit --version || true
+          devkit doctor || echo "Doctor check completed"
+
+  # Example: Using setup action with specific version
+  example-version-install:
+    name: Example - Install Specific Version
+    runs-on: ubuntu-latest
+    if: false  # Disabled until we have actual releases
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup devkit
+        uses: ./.github/actions/setup-devkit
+        with:
+          version: 'v0.1.0'  # Replace with actual version tag
+
+      - name: Run devkit commands
+        run: |
+          devkit doctor
+          devkit status

@@ -16,6 +16,14 @@ members = [
     "extensions/devkit-ext-env",
     "extensions/devkit-ext-ecs",
     "extensions/devkit-ext-pulumi",
+    "extensions/devkit-ext-cache",
+    "extensions/devkit-ext-secrets",
+    "extensions/devkit-ext-security",
+    "extensions/devkit-ext-k8s",
+    "extensions/devkit-ext-watch",
+    "extensions/devkit-ext-monitoring",
+    "extensions/devkit-ext-remote",
+    "extensions/devkit-ext-dashboard",
     # "examples/custom-cli",  # TODO: Update after implementing missing docker functions
 ]
 
@@ -48,6 +56,14 @@ indicatif = "0.18"
 ctrlc = "3.4"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+ureq = { version = "2.10", features = ["json"] }
+walkdir = "2.5"
+humansize = "2.1"
+notify = "7.0"
+notify-rust = "4.11"
+chrono = "0.4"
+ratatui = "0.28"
+crossterm = "0.28"
 
 # Internal crates
 devkit-core = { path = "crates/devkit-core", version = "0.1.0" }

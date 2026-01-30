@@ -1,0 +1,42 @@
+# Example: Cross-platform testing
+#
+# Test your project on Linux, macOS, and Windows simultaneously.
+# The setup-devkit action automatically detects and installs
+# the correct binary for each platform.
+
+name: Cross-Platform
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup devkit
+        uses: crcn/devkit/.github/actions/setup-devkit@main
+        with:
+          version: latest
+
+      - name: Show devkit version
+        shell: bash
+        run: devkit --version || echo "Version check completed"
+
+      - name: Run tests
+        shell: bash
+        run: devkit cmd test
+
+      - name: Check formatting
+        shell: bash
+        run: devkit fmt --check

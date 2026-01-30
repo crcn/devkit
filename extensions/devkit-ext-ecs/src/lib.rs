@@ -18,7 +18,7 @@ impl Extension for EcsExtension {
         devkit_core::cmd_exists("aws")
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         // Note: ECS operations require cluster/task parameters
         // These are better used programmatically or via CLI args
         // For now, return empty menu items

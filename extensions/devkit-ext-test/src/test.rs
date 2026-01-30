@@ -67,7 +67,9 @@ pub fn run_tests(ctx: &AppContext, opts: &TestOptions) -> Result<Option<String>>
         } else if devkit_core::cmd_exists("yarn") {
             "yarn test".to_string()
         } else {
-            return Err(anyhow!("No test command found. Configure [test.command] in config"));
+            return Err(anyhow!(
+                "No test command found. Configure [test.command] in config"
+            ));
         }
     } else {
         return Err(anyhow!(

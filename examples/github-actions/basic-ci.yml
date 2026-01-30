@@ -1,0 +1,38 @@
+# Example: Basic CI workflow using devkit
+#
+# Copy this to your repository at .github/workflows/ci.yml
+# and customize for your project.
+
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test and Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup devkit
+        uses: crcn/devkit/.github/actions/setup-devkit@main
+        with:
+          version: latest
+
+      - name: Check system requirements
+        run: devkit doctor
+
+      - name: Run tests
+        run: devkit cmd test
+
+      - name: Check code formatting
+        run: devkit fmt --check
+
+      - name: Run linter
+        run: devkit lint

@@ -17,19 +17,15 @@ impl Extension for TunnelExtension {
         devkit_core::cmd_exists("ngrok") || devkit_core::cmd_exists("cloudflared")
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![
             MenuItem {
                 label: "🌐 Tunnel - Port 3000".to_string(),
-                handler: Box::new(|ctx| {
-                    start_tunnel(ctx, 3000, None).map_err(Into::into)
-                }),
+                handler: Box::new(|ctx| start_tunnel(ctx, 3000, None).map_err(Into::into)),
             },
             MenuItem {
                 label: "🌐 Tunnel - Port 8080".to_string(),
-                handler: Box::new(|ctx| {
-                    start_tunnel(ctx, 8080, None).map_err(Into::into)
-                }),
+                handler: Box::new(|ctx| start_tunnel(ctx, 8080, None).map_err(Into::into)),
             },
         ]
     }
@@ -75,10 +71,7 @@ fn start_ngrok_tunnel(ctx: &AppContext, port: u16, subdomain: Option<&str>) -> R
 }
 
 fn start_cloudflared_tunnel(ctx: &AppContext, port: u16) -> Result<()> {
-    ctx.print_header(&format!(
-        "Starting cloudflared tunnel to port {}",
-        port
-    ));
+    ctx.print_header(&format!("Starting cloudflared tunnel to port {}", port));
 
     let code = CmdBuilder::new("cloudflared")
         .args(["tunnel", "--url", &format!("http://localhost:{}", port)])

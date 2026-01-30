@@ -21,3 +21,4 @@ glob.workspace = true
 which.workspace = true
 dotenvy.workspace = true
 tracing.workspace = true
+ureq.workspace = true

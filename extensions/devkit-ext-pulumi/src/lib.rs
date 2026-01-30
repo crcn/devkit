@@ -13,23 +13,19 @@ impl Extension for PulumiExtension {
         "pulumi"
     }
 
-    fn is_available(&self, _ctx: &AppContext) -> bool {
-        devkit_core::cmd_exists("pulumi")
+    fn is_available(&self, ctx: &AppContext) -> bool {
+        ctx.features.pulumi
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![
             MenuItem {
                 label: "☁️  Pulumi - Preview".to_string(),
-                handler: Box::new(|ctx| {
-                    pulumi_preview(ctx, None).map_err(Into::into)
-                }),
+                handler: Box::new(|ctx| pulumi_preview(ctx, None).map_err(Into::into)),
             },
             MenuItem {
                 label: "☁️  Pulumi - Deploy (Up)".to_string(),
-                handler: Box::new(|ctx| {
-                    pulumi_up(ctx, None, false).map_err(Into::into)
-                }),
+                handler: Box::new(|ctx| pulumi_up(ctx, None, false).map_err(Into::into)),
             },
         ]
     }
@@ -87,10 +83,7 @@ pub fn pulumi_preview(ctx: &AppContext, stack: Option<&str>) -> Result<()> {
         args.push(s.to_string());
     }
 
-    let code = CmdBuilder::new("pulumi")
-        .args(&args)
-        .cwd(&ctx.repo)
-        .run()?;
+    let code = CmdBuilder::new("pulumi").args(&args).cwd(&ctx.repo).run()?;
 
     if code != 0 {
         return Err(anyhow!("Pulumi preview failed with code {}", code));

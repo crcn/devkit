@@ -115,7 +115,10 @@ pub fn rollback(ctx: &AppContext, version: &str) -> Result<()> {
     // For now, just show how to do it manually
     println!();
     println!("To rollback:");
-    println!("  1. Trigger deployment workflow: gh workflow run deploy --ref {}", version);
+    println!(
+        "  1. Trigger deployment workflow: gh workflow run deploy --ref {}",
+        version
+    );
     println!("  2. Or manually: git checkout {} && ./deploy.sh", version);
 
     Ok(())

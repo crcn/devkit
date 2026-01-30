@@ -1,0 +1,12 @@
+[package]
+name = "devkit-ext-security"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Security scanning extension for devkit"
+
+[dependencies]
+anyhow.workspace = true
+devkit-core.workspace = true

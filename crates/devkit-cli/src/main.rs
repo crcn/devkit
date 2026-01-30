@@ -100,6 +100,26 @@ enum Commands {
         #[arg(value_enum)]
         shell: clap_complete::Shell,
     },
+
+    /// Check for updates
+    Update {
+        /// Force update check (ignore cache)
+        #[arg(long)]
+        force: bool,
+    },
+
+    /// Initialize a new devkit project
+    Init {
+        /// Skip interactive prompts
+        #[arg(long)]
+        no_interactive: bool,
+    },
+
+    /// View command history
+    History {
+        /// Search pattern
+        search: Option<String>,
+    },
 }
 
 #[cfg(feature = "docker")]
@@ -148,8 +168,11 @@ fn init_tracing() {
 }
 
 fn run() -> Result<()> {
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
     let ctx = AppContext::new(cli.quiet)?;
+
+    // Resolve command aliases
+    resolve_aliases(&mut cli, &ctx);
 
     // Register and run prerun hooks from extensions
     #[cfg(feature = "deps")]
@@ -204,11 +227,25 @@ fn run() -> Result<()> {
             Ok(())
         }
 
-        None => interactive_menu(&ctx),
+        Some(Commands::Update { force }) => cmd_update(&ctx, force),
+
+        Some(Commands::Init { no_interactive }) => {
+            devkit_core::init::init_project(&ctx.repo, !no_interactive).map_err(Into::into)
+        }
+
+        Some(Commands::History { search }) => cmd_history(&ctx, search.as_deref()),
+
+        None => {
+            // Check for updates in background (non-blocking)
+            check_for_updates_background(&ctx);
+            interactive_menu(&ctx)
+        }
 
         _ => {
             ctx.print_warning("Feature not available in this project");
-            ctx.print_info("This command requires project setup (e.g., docker-compose.yml, database config)");
+            ctx.print_info(
+                "This command requires project setup (e.g., docker-compose.yml, database config)",
+            );
             Ok(())
         }
     }
@@ -364,8 +401,12 @@ fn handle_docker(ctx: &AppContext, action: DockerAction) -> Result<()> {
         DockerAction::Up => devkit_ext_docker::compose_up(ctx, &[], false).map_err(Into::into),
         DockerAction::Down => devkit_ext_docker::compose_down(ctx).map_err(Into::into),
         DockerAction::Restart => devkit_ext_docker::compose_restart(ctx, &[]).map_err(Into::into),
-        DockerAction::Logs { service } => devkit_ext_docker::logs(ctx, service.as_deref()).map_err(Into::into),
-        DockerAction::Shell { service } => devkit_ext_docker::shell(ctx, service.as_deref()).map_err(Into::into),
+        DockerAction::Logs { service } => {
+            devkit_ext_docker::logs(ctx, service.as_deref()).map_err(Into::into)
+        }
+        DockerAction::Shell { service } => {
+            devkit_ext_docker::shell(ctx, service.as_deref()).map_err(Into::into)
+        }
     }
 }
 
@@ -457,6 +498,9 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
     #[cfg(feature = "ci")]
     registry.register(Box::new(devkit_ext_ci::CiExtension));
 
+    #[cfg(feature = "commands")]
+    registry.register(Box::new(devkit_ext_commands::CommandsExtension));
+
     loop {
         // Build menu dynamically - extensions auto-register their items!
         let menu_items = registry.menu_items(ctx);
@@ -529,3 +573,96 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
     Ok(())
 }
 
+fn cmd_update(ctx: &AppContext, force: bool) -> Result<()> {
+    ctx.print_header("Checking for updates");
+
+    match devkit_core::update::check_for_updates(force) {
+        Ok(Some(info)) => {
+            println!();
+            ctx.print_warning(&format!(
+                "New version available: {} → {}",
+                info.current_version, info.latest_version
+            ));
+            println!();
+            println!("Download: {}", info.download_url);
+            println!();
+            println!("To update:");
+            println!(
+                "  curl -fsSL https://raw.githubusercontent.com/crcn/devkit/main/install.sh | bash"
+            );
+            println!();
+        }
+        Ok(None) => {
+            ctx.print_success("✓ You're on the latest version!");
+        }
+        Err(e) => {
+            ctx.print_warning(&format!("Failed to check for updates: {}", e));
+            ctx.print_info(
+                "You can still check manually at: https://github.com/crcn/devkit/releases",
+            );
+        }
+    }
+
+    Ok(())
+}
+
+fn check_for_updates_background(ctx: &AppContext) {
+    use std::thread;
+
+    let quiet = ctx.quiet;
+    thread::spawn(move || {
+        if let Ok(Some(info)) = devkit_core::update::check_for_updates(false) {
+            if !quiet {
+                eprintln!();
+                eprintln!(
+                    "💡 Update available: {} → {} (run 'devkit update' for details)",
+                    info.current_version, info.latest_version
+                );
+                eprintln!();
+            }
+        }
+    });
+}
+
+fn resolve_aliases(cli: &mut Cli, ctx: &AppContext) {
+    let aliases = &ctx.config.global.aliases.aliases;
+
+    if let Some(Commands::Cmd {
+        command: Some(cmd), ..
+    }) = &mut cli.command
+    {
+        if let Some(resolved) = aliases.get(cmd.as_str()) {
+            tracing::debug!("Resolved alias '{}' to '{}'", cmd, resolved);
+            *cmd = resolved.clone();
+        }
+    }
+}
+
+fn cmd_history(ctx: &AppContext, search: Option<&str>) -> Result<()> {
+    ctx.print_header("Command History");
+    println!();
+
+    let history = match search {
+        Some(pattern) => devkit_core::history::search_history(pattern)?,
+        None => devkit_core::history::load_history()?,
+    };
+
+    if history.is_empty() {
+        ctx.print_info("No command history found");
+        return Ok(());
+    }
+
+    for entry in history.iter().rev().take(20) {
+        let status = if entry.success { "✓" } else { "✗" };
+        let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0)
+            .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
+            .unwrap_or_else(|| "Unknown".to_string());
+
+        println!("{} {} - {}", status, timestamp, entry.command);
+    }
+
+    println!();
+    ctx.print_info(&format!("Showing {} entries", history.len().min(20)));
+
+    Ok(())
+}

@@ -34,7 +34,9 @@ pub enum DevkitError {
     #[error("Circular dependency detected: {cycle}\nPlease remove the circular dependency from your dev.toml files")]
     CircularDependency { cycle: String },
 
-    #[error("Invalid dependency reference: {dep}\nFormat should be 'package:command' or 'package'")]
+    #[error(
+        "Invalid dependency reference: {dep}\nFormat should be 'package:command' or 'package'"
+    )]
     InvalidDependency { dep: String },
 
     #[error("Invalid glob pattern: {pattern}\n{source}")]

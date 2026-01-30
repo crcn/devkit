@@ -1,0 +1,49 @@
+# Example: Integration testing with Docker services
+#
+# This workflow demonstrates:
+# - Starting Docker Compose services
+# - Running integration tests
+# - Collecting logs on failure
+
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup devkit
+        uses: crcn/devkit/.github/actions/setup-devkit@main
+
+      - name: Start Docker services
+        run: devkit docker up -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to start..."
+          sleep 15
+          devkit docker ps
+
+      - name: Check service health
+        run: devkit doctor
+
+      - name: Run integration tests
+        run: devkit cmd test:integration
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          echo "=== Docker Compose Logs ==="
+          devkit docker logs
+
+      - name: Cleanup
+        if: always()
+        run: devkit docker down

@@ -12,10 +12,11 @@ name = "devkit"
 path = "src/main.rs"
 
 [features]
-default = ["deps", "docker", "database", "quality", "git", "tunnel", "env", "benchmark", "ecs", "pulumi", "test", "ci"]
-all = ["deps", "docker", "database", "quality", "git", "tunnel", "env", "benchmark", "ecs", "pulumi", "test", "ci"]
+default = ["commands", "deps", "docker", "database", "git", "tunnel", "env", "benchmark", "ecs", "pulumi", "ci"]
+all = ["commands", "deps", "docker", "database", "quality", "git", "tunnel", "env", "benchmark", "ecs", "pulumi", "test", "ci"]
 
 # Individual feature flags
+commands = ["devkit-ext-commands"]
 deps = ["devkit-ext-deps"]
 docker = ["devkit-ext-docker"]
 database = ["devkit-ext-database"]
@@ -40,8 +41,10 @@ devkit-core.workspace = true
 devkit-tasks.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+chrono.workspace = true
 
 # Optional extensions (enabled by features)
+devkit-ext-commands = { path = "../../extensions/devkit-ext-commands", optional = true }
 devkit-ext-deps = { path = "../../extensions/devkit-ext-deps", optional = true }
 devkit-ext-docker = { path = "../../extensions/devkit-ext-docker", optional = true }
 devkit-ext-database = { path = "../../extensions/devkit-ext-database", optional = true }

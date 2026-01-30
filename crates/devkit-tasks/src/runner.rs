@@ -45,11 +45,7 @@ pub struct CmdResult {
 }
 
 /// Run a command across all packages that define it
-pub fn run_cmd(
-    ctx: &AppContext,
-    cmd_name: &str,
-    opts: &CmdOptions,
-) -> Result<Vec<CmdResult>> {
+pub fn run_cmd(ctx: &AppContext, cmd_name: &str, opts: &CmdOptions) -> Result<Vec<CmdResult>> {
     // Find all packages with this command
     let packages = ctx.config.packages_with_cmd(cmd_name);
 

@@ -1,0 +1,13 @@
+[package]
+name = "devkit-ext-watch"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Advanced file watching extension for devkit"
+
+[dependencies]
+anyhow.workspace = true
+devkit-core.workspace = true
+notify.workspace = true

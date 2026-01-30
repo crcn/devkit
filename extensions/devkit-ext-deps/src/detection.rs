@@ -163,11 +163,7 @@ impl PackageInfo {
         // Parse package name from Cargo.toml
         let content = std::fs::read_to_string(&cargo_toml).ok()?;
         let parsed: toml::Value = toml::from_str(&content).ok()?;
-        let name = parsed
-            .get("package")?
-            .get("name")?
-            .as_str()?
-            .to_string();
+        let name = parsed.get("package")?.get("name")?.as_str()?.to_string();
 
         // Check if dependencies need installing
         let needs_install = Self::rust_needs_install(path);
@@ -265,10 +261,7 @@ impl PackageInfo {
         };
 
         // Try to get package name from pyproject.toml or setup.py
-        let name = path
-            .file_name()?
-            .to_str()?
-            .to_string();
+        let name = path.file_name()?.to_str()?.to_string();
 
         let needs_install = Self::python_needs_install(path, package_manager);
 
@@ -322,8 +315,8 @@ impl PackageInfo {
                     .to_string()
             });
 
-        let needs_install = !path.join("go.sum").exists()
-            || Self::file_newer_than(&go_mod, &path.join("go.sum"));
+        let needs_install =
+            !path.join("go.sum").exists() || Self::file_newer_than(&go_mod, &path.join("go.sum"));
 
         Some(PackageInfo {
             path: path.to_path_buf(),
@@ -337,7 +330,8 @@ impl PackageInfo {
     /// Detect Java package (Maven or Gradle)
     fn detect_java(path: &Path) -> Option<Self> {
         let has_pom = path.join("pom.xml").exists();
-        let has_gradle = path.join("build.gradle").exists() || path.join("build.gradle.kts").exists();
+        let has_gradle =
+            path.join("build.gradle").exists() || path.join("build.gradle.kts").exists();
 
         if !has_pom && !has_gradle {
             return None;
@@ -371,10 +365,7 @@ impl PackageInfo {
         // Parse package name from composer.json
         let content = std::fs::read_to_string(&composer_json).ok()?;
         let parsed: serde_json::Value = serde_json::from_str(&content).ok()?;
-        let name = parsed
-            .get("name")?
-            .as_str()?
-            .to_string();
+        let name = parsed.get("name")?.as_str()?.to_string();
 
         let needs_install = !path.join("vendor").exists()
             || Self::file_newer_than(&composer_json, &path.join("vendor"));
@@ -392,15 +383,13 @@ impl PackageInfo {
     fn detect_dotnet(path: &Path) -> Option<Self> {
         // Look for .csproj, .fsproj, or .vbproj files
         let entries = std::fs::read_dir(path).ok()?;
-        let has_project = entries
-            .filter_map(|e| e.ok())
-            .any(|e| {
-                e.path()
-                    .extension()
-                    .and_then(|ext| ext.to_str())
-                    .map(|ext| matches!(ext, "csproj" | "fsproj" | "vbproj"))
-                    .unwrap_or(false)
-            });
+        let has_project = entries.filter_map(|e| e.ok()).any(|e| {
+            e.path()
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .map(|ext| matches!(ext, "csproj" | "fsproj" | "vbproj"))
+                .unwrap_or(false)
+        });
 
         if !has_project {
             return None;
@@ -426,8 +415,8 @@ impl PackageInfo {
         }
 
         let name = path.file_name()?.to_str()?.to_string();
-        let needs_install = !path.join("deps").exists()
-            || Self::file_newer_than(&mix_exs, &path.join("mix.lock"));
+        let needs_install =
+            !path.join("deps").exists() || Self::file_newer_than(&mix_exs, &path.join("mix.lock"));
 
         Some(PackageInfo {
             path: path.to_path_buf(),
@@ -458,11 +447,13 @@ impl PackageInfo {
         match package_manager {
             PackageManager::Poetry => {
                 let poetry_lock = path.join("poetry.lock");
-                !poetry_lock.exists() || Self::file_newer_than(&path.join("pyproject.toml"), &poetry_lock)
+                !poetry_lock.exists()
+                    || Self::file_newer_than(&path.join("pyproject.toml"), &poetry_lock)
             }
             PackageManager::Pipenv => {
                 let pipfile_lock = path.join("Pipfile.lock");
-                !pipfile_lock.exists() || Self::file_newer_than(&path.join("Pipfile"), &pipfile_lock)
+                !pipfile_lock.exists()
+                    || Self::file_newer_than(&path.join("Pipfile"), &pipfile_lock)
             }
             _ => {
                 // For pip and uv, check if requirements.txt is newer than venv
@@ -471,7 +462,8 @@ impl PackageInfo {
                 } else {
                     path.join(".venv")
                 };
-                !venv_dir.exists() || Self::file_newer_than(&path.join("requirements.txt"), &venv_dir)
+                !venv_dir.exists()
+                    || Self::file_newer_than(&path.join("requirements.txt"), &venv_dir)
             }
         }
     }
@@ -491,9 +483,7 @@ impl PackageInfo {
             std::fs::metadata(&cargo_toml),
             std::fs::metadata(&cargo_lock),
         ) {
-            if let (Ok(toml_time), Ok(lock_time)) =
-                (toml_meta.modified(), lock_meta.modified())
-            {
+            if let (Ok(toml_time), Ok(lock_time)) = (toml_meta.modified(), lock_meta.modified()) {
                 if toml_time > lock_time {
                     return true;
                 }

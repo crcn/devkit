@@ -1,0 +1,16 @@
+[package]
+name = "devkit-ext-cache"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Build cache management extension for devkit"
+
+[dependencies]
+anyhow.workspace = true
+devkit-core.workspace = true
+dirs.workspace = true
+glob.workspace = true
+walkdir.workspace = true
+humansize = "2.1"

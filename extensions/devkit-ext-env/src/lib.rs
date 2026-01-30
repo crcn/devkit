@@ -20,7 +20,7 @@ impl Extension for EnvExtension {
         true
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![
             MenuItem {
                 label: "🔐 Env - Load .env".to_string(),
@@ -43,7 +43,10 @@ impl Extension for EnvExtension {
 /// Load environment variables from a .env file
 pub fn load_env(ctx: &AppContext, env_file: &Path) -> Result<()> {
     if !env_file.exists() {
-        return Err(anyhow!("Environment file not found: {}", env_file.display()));
+        return Err(anyhow!(
+            "Environment file not found: {}",
+            env_file.display()
+        ));
     }
 
     let content = fs::read_to_string(env_file)
@@ -66,11 +69,7 @@ pub fn load_env(ctx: &AppContext, env_file: &Path) -> Result<()> {
 }
 
 /// Pull environment variables from Pulumi ESC (if available)
-pub fn pull_env_from_esc(
-    ctx: &AppContext,
-    esc_path: &str,
-    out_file: &Path,
-) -> Result<()> {
+pub fn pull_env_from_esc(ctx: &AppContext, esc_path: &str, out_file: &Path) -> Result<()> {
     if !devkit_core::cmd_exists("esc") {
         return Err(anyhow!(
             "esc CLI not found. Install from: https://www.pulumi.com/docs/esc-cli/"

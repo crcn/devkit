@@ -20,10 +20,13 @@ impl Extension for TestExtension {
     }
 
     fn is_available(&self, ctx: &AppContext) -> bool {
-        ctx.features.cargo || ctx.features.node
+        // DEPRECATED: Most projects should use [cmd.test] with variants instead.
+        // This extension provides coverage tools, but is opt-in only.
+        // Disabled by default - use [cmd.test] with variants instead
+        false
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![
             MenuItem {
                 label: "🧪 Test - Run All".to_string(),
@@ -34,9 +37,7 @@ impl Extension for TestExtension {
             },
             MenuItem {
                 label: "🧪 Test - Watch".to_string(),
-                handler: Box::new(|ctx| {
-                    watch_tests(ctx, None).map_err(Into::into)
-                }),
+                handler: Box::new(|ctx| watch_tests(ctx, None).map_err(Into::into)),
             },
             MenuItem {
                 label: "📊 Test - Coverage".to_string(),

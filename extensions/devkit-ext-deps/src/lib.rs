@@ -35,12 +35,15 @@ pub fn discover_packages(ctx: &AppContext) -> Vec<PackageInfo> {
                 }
 
                 // Skip excluded packages
-                let dir_name = entry
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("");
+                let dir_name = entry.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-                if ctx.config.global.workspaces.exclude.contains(&dir_name.to_string()) {
+                if ctx
+                    .config
+                    .global
+                    .workspaces
+                    .exclude
+                    .contains(&dir_name.to_string())
+                {
                     continue;
                 }
 

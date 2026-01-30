@@ -1,7 +1,7 @@
 //! Database operations
 
 use anyhow::{anyhow, Result};
-use devkit_core::{AppContext, Extension, MenuItem, utils::cmd_exists};
+use devkit_core::{utils::cmd_exists, AppContext, Extension, MenuItem};
 use std::process::Command;
 
 pub struct DatabaseExtension;
@@ -15,7 +15,7 @@ impl Extension for DatabaseExtension {
         ctx.features.database
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         use devkit_core::DevkitError;
         vec![
             MenuItem {
@@ -40,7 +40,9 @@ impl Extension for DatabaseExtension {
 
 pub fn migrate(ctx: &AppContext) -> Result<()> {
     if !cmd_exists("sqlx") {
-        return Err(anyhow!("sqlx-cli not installed. Run: cargo install sqlx-cli"));
+        return Err(anyhow!(
+            "sqlx-cli not installed. Run: cargo install sqlx-cli"
+        ));
     }
 
     ctx.print_info("Running migrations...");
@@ -122,8 +124,8 @@ pub fn seed(ctx: &AppContext) -> Result<()> {
 pub fn shell(ctx: &AppContext) -> Result<()> {
     ctx.print_info("Opening database shell...");
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgresql://localhost/dev".to_string());
+    let database_url =
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgresql://localhost/dev".to_string());
 
     let status = Command::new("psql")
         .arg(database_url)

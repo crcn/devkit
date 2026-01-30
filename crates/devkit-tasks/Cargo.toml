@@ -13,4 +13,7 @@ console.workspace = true
 serde.workspace = true
 toml.workspace = true
 glob.workspace = true
+regex.workspace = true
+dialoguer.workspace = true
+notify.workspace = true
 devkit-core.workspace = true

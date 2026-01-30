@@ -26,11 +26,17 @@ pub trait Extension {
 
     /// Get menu items for the main interactive menu
     /// Only called if is_available() returns true
-    fn menu_items(&self) -> Vec<MenuItem>;
+    /// Takes AppContext to allow dynamic menu generation based on project state
+    fn menu_items(&self, ctx: &AppContext) -> Vec<MenuItem>;
 
     /// Optional: Handle CLI subcommand
     /// Return None if this extension doesn't handle CLI commands directly
-    fn handle_command(&self, _ctx: &AppContext, _command: &str, _args: &[String]) -> Option<Result<()>> {
+    fn handle_command(
+        &self,
+        _ctx: &AppContext,
+        _command: &str,
+        _args: &[String],
+    ) -> Option<Result<()>> {
         None
     }
 
@@ -71,7 +77,7 @@ impl ExtensionRegistry {
     pub fn menu_items(&self, ctx: &AppContext) -> Vec<MenuItem> {
         self.available_extensions(ctx)
             .into_iter()
-            .flat_map(|ext| ext.menu_items())
+            .flat_map(|ext| ext.menu_items(ctx))
             .collect()
     }
 

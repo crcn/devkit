@@ -1,0 +1,156 @@
+name: 'Setup devkit'
+description: 'Install devkit CLI for use in GitHub Actions workflows'
+author: 'Crcn'
+
+inputs:
+  version:
+    description: 'Version of devkit to install (e.g., v0.1.0-abc1234 or latest)'
+    required: false
+    default: 'latest'
+  github-token:
+    description: 'GitHub token for API access (avoids rate limits). Defaults to github.token if not provided.'
+    required: false
+    default: ''
+
+outputs:
+  version:
+    description: 'The installed version of devkit'
+    value: ${{ steps.install.outputs.version }}
+  cache-hit:
+    description: 'Whether the devkit binary was restored from cache'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Detect platform
+      id: platform
+      shell: bash
+      run: |
+        os=$(uname -s | tr '[:upper:]' '[:lower:]')
+        arch=$(uname -m)
+
+        case "$os" in
+          linux*)
+            case "$arch" in
+              x86_64|amd64)
+                platform="linux-x86_64"
+                ;;
+              aarch64|arm64)
+                platform="linux-aarch64"
+                ;;
+              *)
+                echo "::error::Unsupported architecture: $arch"
+                exit 1
+                ;;
+            esac
+            ;;
+          darwin*)
+            case "$arch" in
+              x86_64|amd64)
+                platform="macos-x86_64"
+                ;;
+              arm64|aarch64)
+                platform="macos-aarch64"
+                ;;
+              *)
+                echo "::error::Unsupported architecture: $arch"
+                exit 1
+                ;;
+            esac
+            ;;
+          mingw*|msys*|cygwin*)
+            platform="windows-x86_64.exe"
+            ;;
+          *)
+            echo "::error::Unsupported operating system: $os"
+            exit 1
+            ;;
+        esac
+
+        echo "platform=${platform}" >> $GITHUB_OUTPUT
+        echo "Detected platform: ${platform}"
+
+    - name: Get download URL
+      id: url
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        PLATFORM: ${{ steps.platform.outputs.platform }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        if [ "$VERSION" = "latest" ]; then
+          # Try to get latest release tag using gh CLI if token is available
+          if [ -n "$GITHUB_TOKEN" ] && command -v gh >/dev/null 2>&1; then
+            tag=$(gh api repos/crcn/devkit/releases/latest --jq '.tag_name' 2>/dev/null || echo "")
+          else
+            tag=""
+          fi
+
+          if [ -z "$tag" ]; then
+            # Fallback to 'latest' URL
+            echo "Using 'latest' download URL (no specific version)"
+            url="https://github.com/crcn/devkit/releases/latest/download/devkit-${PLATFORM}"
+            version="latest"
+          else
+            url="https://github.com/crcn/devkit/releases/download/${tag}/devkit-${PLATFORM}"
+            version="${tag}"
+          fi
+        else
+          url="https://github.com/crcn/devkit/releases/download/${VERSION}/devkit-${PLATFORM}"
+          version="${VERSION}"
+        fi
+
+        echo "url=${url}" >> $GITHUB_OUTPUT
+        echo "version=${version}" >> $GITHUB_OUTPUT
+        echo "Download URL: ${url}"
+
+    - name: Cache devkit binary
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.local/bin/devkit
+        key: devkit-${{ runner.os }}-${{ runner.arch }}-${{ steps.url.outputs.version }}
+
+    - name: Install devkit
+      id: install
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        DOWNLOAD_URL: ${{ steps.url.outputs.url }}
+      run: |
+        echo "Installing devkit from: ${DOWNLOAD_URL}"
+
+        # Create bin directory
+        mkdir -p ~/.local/bin
+
+        # Download binary
+        if curl -fsSL "${DOWNLOAD_URL}" -o ~/.local/bin/devkit; then
+          chmod +x ~/.local/bin/devkit
+          echo "✓ Installed devkit binary"
+        else
+          echo "::error::Failed to download devkit binary from ${DOWNLOAD_URL}"
+          exit 1
+        fi
+
+    - name: Add to PATH
+      shell: bash
+      run: |
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Verify installation
+      shell: bash
+      run: |
+        if command -v devkit >/dev/null 2>&1; then
+          version=$(devkit --version 2>&1 || echo "unknown")
+          echo "✓ devkit is available: ${version}"
+        else
+          echo "::error::devkit was not installed correctly"
+          exit 1
+        fi
+
+        echo "version=${version}" >> $GITHUB_OUTPUT
+
+branding:
+  icon: 'package'
+  color: 'blue'

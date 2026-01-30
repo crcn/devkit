@@ -23,39 +23,49 @@ impl Extension for GitExtension {
         ctx.features.git
     }
 
-    fn menu_items(&self) -> Vec<MenuItem> {
+    fn menu_items(&self, _ctx: &AppContext) -> Vec<MenuItem> {
         vec![
             MenuItem {
                 label: "📊 Git - Status".to_string(),
-                handler: Box::new(|ctx| {
-                    git_status(ctx).map_err(Into::into)
-                }),
+                handler: Box::new(|ctx| git_status(ctx).map_err(Into::into)),
             },
             MenuItem {
                 label: "🚀 Git - Release (Patch)".to_string(),
                 handler: Box::new(|ctx| {
-                    create_release(ctx, &ReleaseOptions {
-                        bump: BumpType::Patch,
-                        ..Default::default()
-                    }).map_err(Into::into)
+                    create_release(
+                        ctx,
+                        &ReleaseOptions {
+                            bump: BumpType::Patch,
+                            ..Default::default()
+                        },
+                    )
+                    .map_err(Into::into)
                 }),
             },
             MenuItem {
                 label: "🚀 Git - Release (Minor)".to_string(),
                 handler: Box::new(|ctx| {
-                    create_release(ctx, &ReleaseOptions {
-                        bump: BumpType::Minor,
-                        ..Default::default()
-                    }).map_err(Into::into)
+                    create_release(
+                        ctx,
+                        &ReleaseOptions {
+                            bump: BumpType::Minor,
+                            ..Default::default()
+                        },
+                    )
+                    .map_err(Into::into)
                 }),
             },
             MenuItem {
                 label: "🚀 Git - Release (Major)".to_string(),
                 handler: Box::new(|ctx| {
-                    create_release(ctx, &ReleaseOptions {
-                        bump: BumpType::Major,
-                        ..Default::default()
-                    }).map_err(Into::into)
+                    create_release(
+                        ctx,
+                        &ReleaseOptions {
+                            bump: BumpType::Major,
+                            ..Default::default()
+                        },
+                    )
+                    .map_err(Into::into)
                 }),
             },
         ]

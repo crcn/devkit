@@ -1,0 +1,13 @@
+[package]
+name = "devkit-ext-commands"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Project-specific commands extension for devkit"
+
+[dependencies]
+anyhow.workspace = true
+devkit-core.workspace = true
+devkit-tasks.workspace = true

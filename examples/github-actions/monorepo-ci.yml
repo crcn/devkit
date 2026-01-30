@@ -1,0 +1,64 @@
+# Example: Monorepo CI with parallel package testing
+#
+# This workflow demonstrates testing multiple packages in parallel,
+# running quality checks, and building all packages.
+
+name: Monorepo CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup devkit
+        uses: crcn/devkit/.github/actions/setup-devkit@main
+
+      - name: Format check
+        run: devkit fmt --check
+
+      - name: Lint
+        run: devkit lint
+
+  test:
+    name: Test All Packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup devkit
+        uses: crcn/devkit/.github/actions/setup-devkit@main
+
+      - name: Run tests in parallel
+        run: devkit cmd test --parallel
+
+  build:
+    name: Build All Packages
+    runs-on: ubuntu-latest
+    needs: [quality, test]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup devkit
+        uses: crcn/devkit/.github/actions/setup-devkit@main
+
+      - name: Build all packages
+        run: devkit cmd build --parallel
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            target/
+            dist/
+          retention-days: 7
