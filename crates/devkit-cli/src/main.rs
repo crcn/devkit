@@ -5,7 +5,7 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use devkit_core::{AppContext, ExtensionRegistry};
+use devkit_core::{AppContext, ExtensionRegistry, MenuItem};
 use std::process::ExitCode;
 
 #[derive(Parser)]
@@ -311,7 +311,7 @@ fn handle_deps(ctx: &AppContext, list: bool) -> Result<()> {
 
 fn interactive_menu(ctx: &AppContext) -> Result<()> {
     use dialoguer::FuzzySelect;
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
 
     // Create extension registry and register all extensions
     let mut registry = ExtensionRegistry::new();
@@ -339,17 +339,6 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
 
     #[cfg(feature = "commands")]
     registry.register(Box::new(devkit_ext_commands::CommandsExtension));
-
-    // Start with all groups expanded for better discoverability and filtering
-    let menu_items_initial = registry.menu_items(ctx);
-    let mut expanded_groups: HashSet<String> = HashSet::new();
-
-    // Auto-expand all groups initially
-    for item in &menu_items_initial {
-        if let Some(group) = &item.group {
-            expanded_groups.insert(group.clone());
-        }
-    }
 
     loop {
         // Build menu dynamically
@@ -388,24 +377,18 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
         let mut group_names: Vec<_> = groups.keys().cloned().collect();
         group_names.sort();
 
-        for group_name in group_names {
-            let indices = &groups[&group_name];
-            let is_expanded = expanded_groups.contains(&group_name);
+        for group_name in &group_names {
+            display.push(group_name.clone());
+            display_mapping.push(DisplayItem::GroupHeader(group_name.clone()));
+        }
 
-            if is_expanded {
-                // Show group header with ▼ indicator
-                display.push(format!("▼ {}", group_name));
-                display_mapping.push(DisplayItem::GroupHeader(group_name.clone()));
-
-                // Show all items in group with indentation
-                for &idx in indices {
-                    display.push(format!("  {}", menu_items[idx].label));
-                    display_mapping.push(DisplayItem::Item(idx));
-                }
-            } else {
-                // Show collapsed group with ▶ indicator
-                display.push(format!("▶ {}", group_name));
-                display_mapping.push(DisplayItem::GroupHeader(group_name));
+        // Add all grouped items in flat format for filtering (Group / Item)
+        for group_name in &group_names {
+            let indices = &groups[group_name];
+            for &idx in indices {
+                let flat_label = format!("{} / {}", group_name, menu_items[idx].label);
+                display.push(flat_label);
+                display_mapping.push(DisplayItem::Item(idx));
             }
         }
 
@@ -423,11 +406,10 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
         // Handle selection
         match &display_mapping[choice] {
             DisplayItem::GroupHeader(group_name) => {
-                // Toggle group expansion
-                if expanded_groups.contains(group_name) {
-                    expanded_groups.remove(group_name);
-                } else {
-                    expanded_groups.insert(group_name.clone());
+                // Navigate to submenu for this group
+                if let Err(e) = show_group_submenu(ctx, group_name, &menu_items, &groups) {
+                    println!();
+                    ctx.print_error(&format!("Error: {:#}", e));
                 }
             }
             DisplayItem::Item(idx) => {
@@ -441,6 +423,48 @@ fn interactive_menu(ctx: &AppContext) -> Result<()> {
             DisplayItem::Exit => {
                 break;
             }
+        }
+    }
+
+    Ok(())
+}
+
+fn show_group_submenu(
+    ctx: &AppContext,
+    group_name: &str,
+    menu_items: &[MenuItem],
+    groups: &std::collections::HashMap<String, Vec<usize>>,
+) -> Result<()> {
+    use dialoguer::FuzzySelect;
+
+    let indices = groups.get(group_name).unwrap();
+
+    loop {
+        let mut display: Vec<String> = vec!["← Back".to_string()];
+
+        for &idx in indices {
+            display.push(menu_items[idx].label.clone());
+        }
+
+        println!();
+        let choice = FuzzySelect::with_theme(&ctx.theme())
+            .with_prompt(group_name)
+            .items(&display)
+            .default(0)
+            .interact()?;
+
+        if choice == 0 {
+            // Back to main menu
+            break;
+        }
+
+        // Execute the selected item
+        let item_idx = indices[choice - 1];
+        println!();
+        let result: Result<()> = (menu_items[item_idx].handler)(ctx).map_err(Into::into);
+        if let Err(e) = result {
+            println!();
+            ctx.print_error(&format!("Error: {:#}", e));
         }
     }
 
